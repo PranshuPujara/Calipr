@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+nexhire-ai/.env
+.env
+.env.local
+
+# Run history / database logs (excluding default candidates database)
+nexhire-ai/data/history.json
+
+# Node modules and build output in frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
