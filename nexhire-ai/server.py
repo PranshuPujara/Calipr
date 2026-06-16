@@ -190,6 +190,11 @@ class ConfigModel(BaseModel):
     groq_api_key: Optional[str] = None
     gemini_api_key: Optional[str] = None
     llm_provider: Optional[str] = "groq"
+    model_name: Optional[str] = None
+
+class TestConfigModel(BaseModel):
+    provider: str = "groq"
+    model_name: str = "llama-3.1-70b-versatile"
 
 # --- API ENDPOINTS ---
 
@@ -517,10 +522,16 @@ def get_run_history():
 @app.get("/api/config")
 def get_llm_config():
     """Get active configuration settings, with masked API keys for security."""
+    provider = os.getenv("LLM_PROVIDER", "groq")
+    if provider == "groq":
+        model = os.getenv("GROQ_MODEL", "llama-3.1-70b-versatile")
+    else:
+        model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     return {
         "groq_api_key": "****" if os.getenv("GROQ_API_KEY") else "",
         "gemini_api_key": "****" if os.getenv("GEMINI_API_KEY") else "",
-        "llm_provider": os.getenv("LLM_PROVIDER", "groq")
+        "llm_provider": provider,
+        "model_name": model
     }
 
 @app.post("/api/config")
@@ -550,13 +561,35 @@ def update_llm_config(conf: ConfigModel):
     if conf.llm_provider is not None:
         env_map["LLM_PROVIDER"] = conf.llm_provider
         os.environ["LLM_PROVIDER"] = conf.llm_provider
+    if conf.model_name is not None:
+        if conf.llm_provider == "gemini":
+            env_map["GEMINI_MODEL"] = conf.model_name
+            os.environ["GEMINI_MODEL"] = conf.model_name
+        else:
+            env_map["GROQ_MODEL"] = conf.model_name
+            os.environ["GROQ_MODEL"] = conf.model_name
         
     # Write back to .env
     with open(env_path, "w", encoding="utf-8") as f:
         for k, v in env_map.items():
             f.write(f"{k}={v}\n")
             
-    return {"status": "success", "provider": os.getenv("LLM_PROVIDER")}
+    return {"status": "success", "provider": os.getenv("LLM_PROVIDER"), "model": conf.model_name}
+
+@app.post("/api/config/test")
+def test_llm_connection(conf: TestConfigModel):
+    """Test LLM connection with a simple prompt."""
+    try:
+        response = call_llm(
+            prompt="Reply with exactly: OK",
+            provider=conf.provider,
+            config={"model_name": conf.model_name}
+        )
+        logger.info("LLM test successful (%s/%s): %s", conf.provider, conf.model_name, response[:50])
+        return {"status": "success", "response": response.strip()[:100]}
+    except Exception as e:
+        logger.error("LLM test failed (%s/%s): %s", conf.provider, conf.model_name, e)
+        return {"status": "failed", "error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
