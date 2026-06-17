@@ -8,6 +8,16 @@ import re
 from docx import Document
 import pandas as pd
 
+# Safe import of PdfReader
+try:
+    from pypdf import PdfReader
+except ImportError:
+    PdfReader = None
+
+# Initialize session state for custom uploaded candidates
+if "uploaded_candidates" not in st.session_state:
+    st.session_state.uploaded_candidates = []
+
 st.set_page_config(
     page_title="Calipr AI - Redrob Ranker Sandbox",
     layout="wide",
@@ -144,6 +154,224 @@ def generate_reasoning(c, s2_skills, core_skills):
             f"{matched} core skills matched; "
             f"response rate {rs.get('recruiter_response_rate', 0.0):.2f}.")
 
+def extract_text_from_file(uploaded_file):
+    filename = uploaded_file.name
+    if filename.endswith(".pdf"):
+        if PdfReader is None:
+            return "Error: pypdf library is not installed."
+        try:
+            reader = PdfReader(uploaded_file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text() or ""
+            return text
+        except Exception as e:
+            return f"Error reading PDF: {e}"
+    else:
+        try:
+            return uploaded_file.read().decode("utf-8", errors="ignore")
+        except Exception as e:
+            return f"Error reading text file: {e}"
+
+def parse_resume_offline(text, filename="Resume"):
+    emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    email = emails[0] if emails else "contact@candidate.com"
+    
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    name = lines[0] if lines else filename.split('.')[0]
+    if len(name) > 30:
+        name = filename.split('.')[0]
+        
+    exp_matches = re.findall(r'(\d+(?:\.\d+)?)\s*(?:years|yrs|year)\b', text.lower())
+    years_exp = float(exp_matches[0]) if exp_matches else 3.0
+    if years_exp > 40:
+        years_exp = 3.0
+        
+    known_skills = [
+        "Python", "PyTorch", "React", "FastAPI", "PostgreSQL", "Docker", "AWS", "LangChain", "BERT", "YOLOv8",
+        "JavaScript", "TypeScript", "HTML", "CSS", "SQL", "Git", "Spark", "Kafka", "TensorFlow", "Kubernetes",
+        "C++", "Java", "Go", "Rust", "Node.js", "MongoDB", "Redis", "Framer", "Figma", "Tailwind"
+    ]
+    detected_skills = []
+    for skill in known_skills:
+        pattern = r'\b' + re.escape(skill.lower()) + r'\b'
+        if re.search(pattern, text.lower()):
+            detected_skills.append({
+                "name": skill,
+                "proficiency": "advanced" if skill in ["Python", "JavaScript", "SQL"] else "intermediate",
+                "duration_months": int(years_exp * 6)
+            })
+            
+    title = "Software Engineer"
+    titles = ["backend engineer", "frontend engineer", "fullstack engineer", "full stack engineer",
+              "data scientist", "data engineer", "machine learning engineer", "devops engineer",
+              "software engineer", "product manager", "ui/ux designer"]
+    for t in titles:
+        if t in text.lower():
+            title = t.title()
+            break
+            
+    import uuid
+    cid = f"UPLOAD_{uuid.uuid4().hex[:7].upper()}"
+    
+    candidate = {
+        "candidate_id": cid,
+        "profile": {
+            "anonymized_name": name,
+            "headline": f"{title} | {', '.join([s['name'] for s in detected_skills[:3]])}",
+            "summary": text[:300] + ("..." if len(text) > 300 else ""),
+            "location": "Remote",
+            "country": "Global",
+            "years_of_experience": years_exp,
+            "current_title": title,
+            "current_company": "Independent Consultant",
+            "current_company_size": "1-10",
+            "current_industry": "Tech"
+        },
+        "career_history": [
+            {
+                "company": "Current Company",
+                "title": title,
+                "duration_months": int(years_exp * 12),
+                "is_current": True,
+                "company_size": "1-10",
+                "description": f"Worked as {title} utilizing skills like {', '.join([s['name'] for s in detected_skills[:5]])}."
+            }
+        ],
+        "education": [
+            {
+                "institution": "University",
+                "degree": "Bachelor of Science",
+                "field_of_study": "Computer Science",
+                "start_year": 2018,
+                "end_year": 2022,
+                "tier": "tier_2"
+            }
+        ],
+        "skills": detected_skills,
+        "redrob_signals": {
+            "skill_assessment_scores": {s["name"]: 85 for s in detected_skills},
+            "profile_completeness_score": 90,
+            "recruiter_response_rate": 0.85,
+            "avg_response_time_hours": 12.0,
+            "interview_completion_rate": 0.90,
+            "github_activity_score": 80,
+            "offer_acceptance_rate": 0.80,
+            "open_to_work_flag": True,
+            "verified_email": True,
+            "verified_phone": True,
+            "linkedin_connected": True,
+            "saved_by_recruiters_30d": 3,
+            "last_active_date": date.today().isoformat()
+        }
+    }
+    return candidate
+
+def parse_resume_with_groq(text, groq_key):
+    try:
+        from groq import Groq
+        client = Groq(api_key=groq_key)
+        prompt = (
+            "Extract structured candidate details from the resume below. "
+            "Return ONLY a JSON object that matches this format (no markdown code blocks, no other text):\n"
+            "{\n"
+            "  \"name\": \"Candidate Full Name\",\n"
+            "  \"email\": \"candidate@email.com\",\n"
+            "  \"current_title\": \"Job Title\",\n"
+            "  \"years_experience\": integer,\n"
+            "  \"skills\": [\"Skill1\", \"Skill2\", ...],\n"
+            "  \"domains\": [\"Domain1\", \"Domain2\", ...],\n"
+            "  \"behavioral_signals\": {\n"
+            "    \"profile_completeness\": float (0.0 to 1.0),\n"
+            "    \"response_speed_hours\": float (e.g. 12.5),\n"
+            "    \"portfolio_depth\": float (0.0 to 1.0)\n"
+            "  },\n"
+            "  \"career_progression\": [\n"
+            "    {\n"
+            "      \"title\": \"Title\",\n"
+            "      \"company\": \"Company\",\n"
+            "      \"duration_months\": integer\n"
+            "    }\n"
+            "  ]\n"
+            "}\n\n"
+            f"Resume text:\n{text}"
+        )
+        response = client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=2048,
+        )
+        response_text = response.choices[0].message.content or ""
+        if response_text.strip().startswith("```"):
+            response_text = re.sub(r"^```(?:json)?\s*\n?", "", response_text.strip(), flags=re.MULTILINE)
+            response_text = re.sub(r"\n?```\s*$", "", response_text, flags=re.MULTILINE)
+        parsed = json.loads(response_text.strip())
+        
+        import uuid
+        cid = f"UPLOAD_{uuid.uuid4().hex[:7].upper()}"
+        detected_skills = [{
+            "name": s,
+            "proficiency": "advanced",
+            "duration_months": int(parsed.get("years_experience", 3) * 12)
+        } for s in parsed.get("skills", [])]
+        
+        candidate = {
+            "candidate_id": cid,
+            "profile": {
+                "anonymized_name": parsed.get("name", "New Candidate"),
+                "headline": f"{parsed.get('current_title', 'Developer')} | {', '.join(parsed.get('skills', [])[:3])}",
+                "summary": text[:300] + ("..." if len(text) > 300 else ""),
+                "location": "Remote",
+                "country": "Global",
+                "years_of_experience": float(parsed.get("years_experience", 3)),
+                "current_title": parsed.get("current_title", "Software Engineer"),
+                "current_company": parsed.get("career_progression", [{}])[0].get("company", "Independent Consultant") if parsed.get("career_progression") else "Independent Consultant",
+                "current_company_size": "1-10",
+                "current_industry": parsed.get("domains", ["Tech"])[0] if parsed.get("domains") else "Tech"
+            },
+            "career_history": [
+                {
+                    "company": job.get("company", "Company"),
+                    "title": job.get("title", "Developer"),
+                    "duration_months": job.get("duration_months", 12),
+                    "is_current": i == 0,
+                    "company_size": "1-10",
+                    "description": f"Worked as {job.get('title')} at {job.get('company')}."
+                } for i, job in enumerate(parsed.get("career_progression", []))
+            ],
+            "education": [
+                {
+                    "institution": "University",
+                    "degree": "Bachelor's Degree",
+                    "field_of_study": "Computer Science",
+                    "start_year": 2018,
+                    "end_year": 2022,
+                    "tier": "tier_2"
+                }
+            ],
+            "skills": detected_skills,
+            "redrob_signals": {
+                "skill_assessment_scores": {s["name"]: int(parsed.get("behavioral_signals", {}).get("profile_completeness", 0.8) * 100) for s in detected_skills},
+                "profile_completeness_score": int(parsed.get("behavioral_signals", {}).get("profile_completeness", 0.8) * 100),
+                "recruiter_response_rate": 0.85,
+                "avg_response_time_hours": parsed.get("behavioral_signals", {}).get("response_speed_hours", 12.0),
+                "interview_completion_rate": 0.90,
+                "github_activity_score": int(parsed.get("behavioral_signals", {}).get("portfolio_depth", 0.75) * 100),
+                "offer_acceptance_rate": 0.80,
+                "open_to_work_flag": True,
+                "verified_email": True,
+                "verified_phone": True,
+                "linkedin_connected": True,
+                "saved_by_recruiters_30d": 3,
+                "last_active_date": date.today().isoformat()
+            }
+        }
+        return candidate
+    except Exception as e:
+        st.warning(f"Groq LLM parsing failed: {e}. Falling back to offline rule-based parser.")
+        return parse_resume_offline(text, filename="Resume")
+
 # ── STREAMLIT INTERFACE ───────────────────────────────────────────
 st.title("🏆 Calipr AI — Redrob Ranker Sandbox")
 st.markdown("This interactive sandbox demonstrates the offline candidate ranking pipeline built for the Redrob Hackathon. It evaluates candidates from the sample pool against your job description using a 5-Signal scoring system.")
@@ -160,6 +388,44 @@ w_domain = st.sidebar.slider("Signal 5: Domain Alignment", 0.0, 1.0, 0.10, 0.05)
 total_weight = w_semantic + w_skills + w_career + w_behavioral + w_domain
 if abs(total_weight - 1.0) > 0.01:
     st.sidebar.warning(f"Weights sum to {total_weight:.2f}. They will be normalized to 1.0 automatically.")
+
+# Sidebar - LLM Parser Config
+st.sidebar.markdown("---")
+st.sidebar.header("🔑 LLM Configuration")
+groq_key_input = st.sidebar.text_input("Groq API Key (Optional)", type="password", help="Enter Groq API Key to parse resumes with LLM. Otherwise, offline rule-based parsing is used.")
+
+# Sidebar - Resume Uploader
+st.sidebar.markdown("---")
+st.sidebar.header("📄 Upload Candidate Resumes")
+uploaded_resumes = st.sidebar.file_uploader("Upload resumes (PDF or TXT)", type=["pdf", "txt"], accept_multiple_files=True)
+
+# Parse uploaded resumes
+if uploaded_resumes:
+    new_candidates_added = False
+    for f in uploaded_resumes:
+        # Check if we've already parsed this file name to avoid duplicate parsing
+        if f.name not in [c.get("_filename") for c in st.session_state.uploaded_candidates]:
+            with st.spinner(f"Parsing {f.name}..."):
+                text = extract_text_from_file(f)
+                if text and not text.startswith("Error"):
+                    if groq_key_input:
+                        cand = parse_resume_with_groq(text, groq_key_input)
+                    else:
+                        cand = parse_resume_offline(text, filename=f.name)
+                    cand["_filename"] = f.name
+                    st.session_state.uploaded_candidates.append(cand)
+                    new_candidates_added = True
+                else:
+                    st.sidebar.error(f"Failed to read {f.name}: {text}")
+    if new_candidates_added:
+        st.sidebar.success(f"Added {len(uploaded_resumes)} custom candidate(s)!")
+
+# Show number of custom candidates
+if st.session_state.uploaded_candidates:
+    st.sidebar.info(f"Custom Candidates Uploaded: {len(st.session_state.uploaded_candidates)}")
+    if st.sidebar.button("🗑️ Clear Uploaded Candidates"):
+        st.session_state.uploaded_candidates = []
+        st.rerun()
 
 # Main sections
 col1, col2 = st.columns([1, 1])
@@ -220,8 +486,11 @@ if run_pipeline:
         with st.spinner("Initializing models and loading sample candidate pool..."):
             model = load_sentence_transformer()
             candidates = load_sample_candidates()
+            # Append custom candidates
+            if st.session_state.uploaded_candidates:
+                candidates = st.session_state.uploaded_candidates + candidates
             
-        st.info(f"Successfully loaded {len(candidates)} sample candidates.")
+        st.info(f"Successfully loaded {len(candidates)} candidate(s) (including {len(st.session_state.uploaded_candidates)} custom uploads).")
         
         # Normalize weights
         factor = 1.0 / total_weight if total_weight > 0 else 1.0
