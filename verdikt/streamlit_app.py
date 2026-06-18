@@ -795,17 +795,15 @@ def score_bar(label: str, value: float):
         'low':  '#c9502e',   # coral
     }
     fill_color = color_map['high'] if value >= 0.75 else color_map['mid'] if value >= 0.50 else color_map['low']
-    st.markdown(f"""
-    <div class="score-bar-container">
-        <div class="score-bar-label">
-            {label}
-            <span>{value:.2f}</span>
-        </div>
-        <div class="score-bar-track">
-            <div class="score-bar-fill" style="width:{value*100:.1f}%;background:{fill_color};"></div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="score-bar-container">'
+        f'<div class="score-bar-label">{label}<span>{value:.2f}</span></div>'
+        f'<div class="score-bar-track">'
+        f'<div class="score-bar-fill" style="width:{value*100:.1f}%;background:{fill_color};"></div>'
+        f'</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
 # ── CANDIDATE ROW COMPONENT ───────────────────────────────────────
 def candidate_row(rank: int, name: str, title: str, 
@@ -814,37 +812,35 @@ def candidate_row(rank: int, name: str, title: str,
     rank_class = "top3" if rank <= 3 else ""
     score_color = "#0ea158" if score >= 0.75 else "#cf8d13" if score >= 0.50 else "#c9502e"
     
-    return f"""
-    <div class="candidate-card {selected_class}">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <div class="rank-badge {rank_class}">#{rank}</div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:14px;font-weight:700;color:#1a1615;
-                            font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
-                <div style="font-size:12px;color:#757170;font-family:Inter,sans-serif;
-                            margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title} · {years:.1f} yrs</div>
-            </div>
-            <div style="font-size:18px;font-weight:800;color:{score_color};
-                        font-family:'Fragment Mono',monospace;">{score:.3f}</div>
-        </div>
-    </div>
-    """
+    return (
+        f'<div class="candidate-card {selected_class}">'
+        f'<div style="display:flex;align-items:center;gap:12px;">'
+        f'<div class="rank-badge {rank_class}">#{rank}</div>'
+        f'<div style="flex:1;min-width:0;">'
+        f'<div style="font-size:14px;font-weight:700;color:#1a1615;'
+        f'font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>'
+        f'<div style="font-size:12px;color:#757170;font-family:Inter,sans-serif;'
+        f'margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title} · {years:.1f} yrs</div>'
+        f'</div>'
+        f'<div style="font-size:18px;font-weight:800;color:{score_color};'
+        f'font-family:\'Fragment Mono\',monospace;">{score:.3f}</div>'
+        f'</div>'
+        f'</div>'
+    )
 
 # ── SIGNAL CARD COMPONENT ─────────────────────────────────────────
 def signal_card(icon: str, name: str, weight: str, description: str):
-    st.markdown(f"""
-    <div class="card" style="height:100%;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;
-                    margin-bottom:12px;">
-            <div style="font-size:28px;">{icon}</div>
-            <div class="weight-badge">{weight}</div>
-        </div>
-        <div style="font-size:15px;font-weight:700;color:#1a1615;
-                    font-family:'Open Runde', 'Inter',sans-serif;margin-bottom:6px;">{name}</div>
-        <div style="font-size:13px;color:#757170;line-height:1.6;
-                    font-family:Inter,sans-serif;">{description}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="card" style="height:100%;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">'
+        f'<div style="font-size:28px;">{icon}</div>'
+        f'<div class="weight-badge">{weight}</div>'
+        f'</div>'
+        f'<div style="font-size:15px;font-weight:700;color:#1a1615;font-family:\'Open Runde\', \'Inter\',sans-serif;margin-bottom:6px;">{name}</div>'
+        f'<div style="font-size:13px;color:#757170;line-height:1.6;font-family:Inter,sans-serif;">{description}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
 # ── SCORING LOGIC FUNCTIONS ───────────────────────────────────────
 def build_candidate_text(c):
@@ -1130,7 +1126,7 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="section-label">Job Description</div>', unsafe_allow_html=True)
-jd_input_method = st.sidebar.radio("Choose input method", ["Use Hackathon JD", "Paste custom JD", "Upload .docx"], label_visibility="collapsed")
+jd_input_method = st.sidebar.radio("Choose input method", ["Use Hackathon JD", "Paste custom JD", "Upload document"], label_visibility="collapsed")
 
 jd_text = ""
 if jd_input_method == "Use Hackathon JD":
@@ -1149,14 +1145,17 @@ if jd_input_method == "Use Hackathon JD":
 elif jd_input_method == "Paste custom JD":
     jd_text = st.sidebar.text_area("Paste JD text here", height=200, placeholder="Enter job description text...")
 else:
-    uploaded_jd = st.sidebar.file_uploader("Upload job description .docx", type=["docx"], label_visibility="collapsed")
+    uploaded_jd = st.sidebar.file_uploader("Upload job description (PDF, TXT, or DOCX)", type=["pdf", "txt", "docx"], label_visibility="collapsed")
     if uploaded_jd:
         try:
-            doc = Document(uploaded_jd)
-            jd_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-            st.sidebar.success("DOCX parsed successfully.")
+            extracted_jd = extract_text_from_file(uploaded_jd)
+            if extracted_jd.startswith("Error:"):
+                st.sidebar.error(extracted_jd)
+            else:
+                jd_text = extracted_jd
+                st.sidebar.success("Document parsed successfully.")
         except Exception as e:
-            st.sidebar.error(f"Error parsing DOCX: {e}")
+            st.sidebar.error(f"Error parsing document: {e}")
 
 run_pipeline = st.sidebar.button("🚀 Rank Candidates", type="primary", use_container_width=True)
 
@@ -1339,11 +1338,12 @@ with st.expander("📄 Add Custom Resumes to Evaluation Pool", expanded=False):
 
 # Section 6 — Conditional Results Display
 if st.session_state.scored_candidates is not None:
-    st.markdown(f"""
-    <div style="background: rgba(14, 161, 88, 0.08); border: 1px solid rgba(14, 161, 88, 0.25); border-radius: 12px; color: #0c7540; padding: 15px; margin-bottom: 24px; font-weight:600; font-family:Inter,sans-serif;">
-        ✅ Ranking Complete — {st.session_state.run_runtime}s · Evaluated {st.session_state.total_candidates_evaluated:,} candidates
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="background: rgba(14, 161, 88, 0.08); border: 1px solid rgba(14, 161, 88, 0.25); border-radius: 12px; color: #0c7540; padding: 15px; margin-bottom: 24px; font-weight:600; font-family:Inter,sans-serif;">'
+        f'✅ Ranking Complete — {st.session_state.run_runtime}s · Evaluated {st.session_state.total_candidates_evaluated:,} candidates'
+        f'</div>',
+        unsafe_allow_html=True
+    )
     
     scored_list = st.session_state.scored_candidates
     
@@ -1375,20 +1375,20 @@ if st.session_state.scored_candidates is not None:
         
         # Candidate Card Detail Header
         avatar_initial = selected_cand['name'][0].upper() if selected_cand['name'] else 'C'
-        st.markdown(f"""
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-            <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg, #84b9ef, #156cc2);
-                        display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:18px;font-family:'Open Runde',sans-serif;">
-                {avatar_initial}
-            </div>
-            <div>
-                <h2 style="margin:0 !important; font-size: 22px !important;">{selected_cand['name']}</h2>
-                <div style="font-size:14px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;">
-                    {selected_cand['title']} · {selected_cand['experience']:.1f} years experience
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">'
+            f'<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg, #84b9ef, #156cc2);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:18px;font-family:\'Open Runde\',sans-serif;">'
+            f'{avatar_initial}'
+            f'</div>'
+            f'<div>'
+            f'<h2 style="margin:0 !important; font-size: 22px !important;">{selected_cand["name"]}</h2>'
+            f'<div style="font-size:14px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;">'
+            f'{selected_cand["title"]} · {selected_cand["experience"]:.1f} years experience'
+            f'</div>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         
         # Radar Chart Plotly
         scores_dict = {
@@ -1410,24 +1410,26 @@ if st.session_state.scored_candidates is not None:
         
         # Score Card Display
         score_color = "#0ea158" if selected_cand['score'] >= 0.75 else "#cf8d13" if selected_cand['score'] >= 0.50 else "#c9502e"
-        st.markdown(f"""
-        <div class="card-dark" style="margin: 20px 0; text-align:center; padding: 18px 24px;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#757170;margin-bottom:6px;font-family:'Fragment Mono', monospace;">
-                Final Combined Suitability Score
-            </div>
-            <div style="font-size:36px;font-weight:700;color:{score_color};font-family:'Fragment Mono',monospace;line-height:1;">
-                {selected_cand['score']:.4f}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="card-dark" style="margin: 20px 0; text-align:center; padding: 18px 24px;">'
+            f'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#757170;margin-bottom:6px;font-family:\'Fragment Mono\', monospace;">'
+            f'Final Combined Suitability Score'
+            f'</div>'
+            f'<div style="font-size:36px;font-weight:700;color:{score_color};font-family:\'Fragment Mono\',monospace;line-height:1;">'
+            f'{selected_cand["score"]:.4f}'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         
         # AI Rationale Box
         st.markdown('<div class="section-label">AI Rationale & Summary</div>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="rationale-box">
-            "{selected_cand['reasoning']}"
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="rationale-box">'
+            f'"{selected_cand["reasoning"]}"'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         
         # Profile details (Skills Timelines / Timelines Layout)
         st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
@@ -1437,11 +1439,7 @@ if st.session_state.scored_candidates is not None:
         for skill in selected_cand['_profile'].get('skills', []):
             prof = skill.get('proficiency', 'intermediate').lower()
             prof_color = "background: rgba(14,161,88,0.08); color: #0ea158; border: 1px solid rgba(14,161,88,0.25);" if prof == 'expert' or prof == 'advanced' else "background: rgba(132,185,239,0.08); color: #156cc2; border: 1px solid rgba(132,185,239,0.25);"
-            skills_html += f"""
-            <span style="{prof_color} padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 100px; font-family: Inter, sans-serif;">
-                {skill.get('name')} • {prof.title()}
-            </span>
-            """
+            skills_html += f'<span style="{prof_color} padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 100px; font-family: Inter, sans-serif;">{skill.get("name")} • {prof.title()}</span>'
         skills_html += "</div>"
         st.markdown(skills_html, unsafe_allow_html=True)
         
@@ -1450,18 +1448,18 @@ if st.session_state.scored_candidates is not None:
         for job in selected_cand['_profile'].get('career_history', []):
             is_current = job.get('is_current', False)
             bullet_color = "#156cc2" if is_current else "#757170"
-            timeline_html += f"""
-            <div style="position: relative; margin-bottom: 24px;">
-                <div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {bullet_color}; border: 2px solid #FFFFFF;"></div>
-                <div style="font-size: 14px; font-weight: 700; color: #1a1615; font-family: Inter, sans-serif;">{job.get('title')}</div>
-                <div style="font-size: 12px; color: #757170; margin-top: 2px; font-family: Inter, sans-serif;">
-                    {job.get('company')} • {job.get('duration_months', 0)} months
-                </div>
-                <p style="font-size: 13.5px; color: #453f3d; margin-top: 6px; line-height: 1.5; font-family: Inter, sans-serif;">
-                    {job.get('description', '')}
-                </p>
-            </div>
-            """
+            timeline_html += (
+                f'<div style="position: relative; margin-bottom: 24px;">'
+                f'<div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {bullet_color}; border: 2px solid #FFFFFF;"></div>'
+                f'<div style="font-size: 14px; font-weight: 700; color: #1a1615; font-family: Inter, sans-serif;">{job.get("title")}</div>'
+                f'<div style="font-size: 12px; color: #757170; margin-top: 2px; font-family: Inter, sans-serif;">'
+                f'{job.get("company")} • {job.get("duration_months", 0)} months'
+                f'</div>'
+                f'<p style="font-size: 13.5px; color: #453f3d; margin-top: 6px; line-height: 1.5; font-family: Inter, sans-serif;">'
+                f'{job.get("description", "")}'
+                f'</p>'
+                f'</div>'
+            )
         timeline_html += "</div>"
         st.markdown(timeline_html, unsafe_allow_html=True)
         
@@ -1481,33 +1479,13 @@ if st.session_state.scored_candidates is not None:
 # Section 2 — Stats Row
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.markdown("""
-    <div class="stat-card">
-        <div class="stat-number">94%</div>
-        <div class="stat-label">Precision@5</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><div class="stat-number">94%</div><div class="stat-label">Precision@5</div></div>', unsafe_allow_html=True)
 with col2:
-    st.markdown("""
-    <div class="stat-card">
-        <div class="stat-number">&lt; 5m</div>
-        <div class="stat-label">Pipeline Runtime</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><div class="stat-number">&lt; 5m</div><div class="stat-label">Pipeline Runtime</div></div>', unsafe_allow_html=True)
 with col3:
-    st.markdown("""
-    <div class="stat-card">
-        <div class="stat-number">106K</div>
-        <div class="stat-label">Total Candidates</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><div class="stat-number">106K</div><div class="stat-label">Total Candidates</div></div>', unsafe_allow_html=True)
 with col4:
-    st.markdown("""
-    <div class="stat-card">
-        <div class="stat-number">5</div>
-        <div class="stat-label">Scoring Signals</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="stat-card"><div class="stat-number">5</div><div class="stat-label">Scoring Signals</div></div>', unsafe_allow_html=True)
 
 # Section 3 — 5 Signal Cards
 st.markdown('<hr style="border: none; border-top: 1px solid #e4e2e2; margin: 40px 0;">', unsafe_allow_html=True)
@@ -1535,45 +1513,13 @@ st.markdown('<p style="font-size:15px;color:#757170;margin-bottom:24px;">Math fi
 
 p_col1, p_col2, p_col3, p_col4 = st.columns(4)
 with p_col1:
-    st.markdown("""
-    <div class="phase-card">
-        <div class="phase-number">1</div>
-        <h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Ingest &amp; Parse</h3>
-        <p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">
-            Validates candidate schemas and parses job descriptions via structured schemas.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="phase-card"><div class="phase-number">1</div><h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Ingest &amp; Parse</h3><p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">Validates candidate schemas and parses job descriptions via structured schemas.</p></div>', unsafe_allow_html=True)
 with p_col2:
-    st.markdown("""
-    <div class="phase-card">
-        <div class="phase-number">2</div>
-        <h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Hybrid Retrieval</h3>
-        <p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">
-            Pre-filters 106K pool to top 8,000 candidates using BM25 sparse queries.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="phase-card"><div class="phase-number">2</div><h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Hybrid Retrieval</h3><p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">Pre-filters 106K pool to top 8,000 candidates using BM25 sparse queries.</p></div>', unsafe_allow_html=True)
 with p_col3:
-    st.markdown("""
-    <div class="phase-card">
-        <div class="phase-number">3</div>
-        <h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">5-Signal Scoring</h3>
-        <p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">
-            Generates sentence-transformer embeddings and applies weighted score fusion.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="phase-card"><div class="phase-number">3</div><h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">5-Signal Scoring</h3><p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">Generates sentence-transformer embeddings and applies weighted score fusion.</p></div>', unsafe_allow_html=True)
 with p_col4:
-    st.markdown("""
-    <div class="phase-card">
-        <div class="phase-number">4</div>
-        <h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Agentic Re-Rank</h3>
-        <p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">
-            Identifies top 100 fits using tie-breakers and availability scoring.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="phase-card"><div class="phase-number">4</div><h3 style="color:#1a1615;margin-top:10px;margin-bottom:8px;">Agentic Re-Rank</h3><p style="font-size:13px;color:#757170;line-height:1.6;margin:0;font-family:Inter,sans-serif;">Identifies top 100 fits using tie-breakers and availability scoring.</p></div>', unsafe_allow_html=True)
 
 # Section 5 — Sponsors Strip
 st.markdown("""
