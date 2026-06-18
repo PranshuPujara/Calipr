@@ -6,3 +6,5 @@ numpy
 jsonschema
 streamlit
 pypdf
+plotly
+pandas
