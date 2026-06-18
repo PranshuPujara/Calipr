@@ -50,6 +50,10 @@ try:
     )
     from pipeline.reranker import agentic_rerank, call_llm
     from pypdf import PdfReader
+    try:
+        from docx import Document
+    except ImportError:
+        Document = None
 except ImportError as exc:
     logger.error("Failed to import pipeline modules: %s", exc)
     sys.exit(1)
@@ -214,7 +218,7 @@ def upload_candidate_resume(
     file: UploadFile = File(...),
     provider: str = Form("groq")
 ):
-    """Upload a candidate resume (PDF or TXT) and parse it into candidates.json."""
+    """Upload a candidate resume (PDF, TXT or DOCX) and parse it into candidates.json."""
     filename = file.filename
     
     try:
@@ -224,6 +228,11 @@ def upload_candidate_resume(
             text = ""
             for page in reader.pages:
                 text += page.extract_text() or ""
+        elif filename.endswith(".docx"):
+            if Document is None:
+                raise HTTPException(status_code=500, detail="python-docx library is not installed on the server.")
+            doc = Document(file.file)
+            text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
         else:
             text = file.file.read().decode("utf-8")
             

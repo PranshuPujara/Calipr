@@ -321,7 +321,7 @@ const CandidatesPool = ({ candidates, onRefresh, backendUrl }) => {
               <div style={{ border: '2px dashed var(--border)', padding: '40px 20px', borderRadius: 'var(--radius-md)', textAlign: 'center', marginBottom: '20px', cursor: 'pointer', background: '#fafafa' }}>
                 <input 
                   type="file" 
-                  accept=".pdf,.txt" 
+                  accept=".pdf,.txt,.docx" 
                   id="resume-file" 
                   onChange={handleFileChange} 
                   style={{ display: 'none' }} 
@@ -331,7 +331,7 @@ const CandidatesPool = ({ candidates, onRefresh, backendUrl }) => {
                   <div>
                     <span style={{ fontWeight: 600, color: 'var(--primary-dark)' }}>Click to upload</span> or drag and drop
                   </div>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>PDF or TXT resumes (Max 10MB)</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>PDF, TXT, or DOCX resumes (Max 10MB)</span>
                 </label>
               </div>
 

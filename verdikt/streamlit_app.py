@@ -167,6 +167,12 @@ def extract_text_from_file(uploaded_file):
             return text
         except Exception as e:
             return f"Error reading PDF: {e}"
+    elif filename.endswith(".docx"):
+        try:
+            doc = Document(uploaded_file)
+            return "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+        except Exception as e:
+            return f"Error reading DOCX: {e}"
     else:
         try:
             return uploaded_file.read().decode("utf-8", errors="ignore")
@@ -397,7 +403,7 @@ groq_key_input = st.sidebar.text_input("Groq API Key (Optional)", type="password
 # Sidebar - Resume Uploader
 st.sidebar.markdown("---")
 st.sidebar.header("📄 Upload Candidate Resumes")
-uploaded_resumes = st.sidebar.file_uploader("Upload resumes (PDF or TXT)", type=["pdf", "txt"], accept_multiple_files=True)
+uploaded_resumes = st.sidebar.file_uploader("Upload resumes (PDF, TXT, or DOCX)", type=["pdf", "txt", "docx"], accept_multiple_files=True)
 
 # Parse uploaded resumes
 if uploaded_resumes:
@@ -445,10 +451,22 @@ with col1:
     elif jd_input_method == "Paste custom JD text":
         jd_text = st.text_area("Paste Job Description here", height=250)
     else:
-        uploaded_file = st.file_uploader("Upload job_description.docx", type=["docx"])
+        uploaded_file = st.file_uploader("Upload Job Description (DOCX, PDF, or TXT)", type=["docx", "pdf", "txt"])
         if uploaded_file:
-            doc = Document(uploaded_file)
-            jd_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            filename = uploaded_file.name
+            if filename.endswith(".docx"):
+                doc = Document(uploaded_file)
+                jd_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            elif filename.endswith(".pdf"):
+                if PdfReader is None:
+                    jd_text = "Error: pypdf is not installed."
+                else:
+                    reader = PdfReader(uploaded_file)
+                    jd_text = ""
+                    for page in reader.pages:
+                        jd_text += page.extract_text() or ""
+            else:
+                jd_text = uploaded_file.read().decode("utf-8", errors="ignore")
             st.text_area("Extracted JD Text", jd_text, height=200, disabled=True)
 
 with col2:
