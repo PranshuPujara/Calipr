@@ -33,17 +33,32 @@ JD_DOMAIN_KW   = []
 JD_MIN_EXP     = 0
 
 SKILL_ADJACENCY = {
-    "Python": ["Julia","R","Scala"],
-    "PyTorch": ["TensorFlow","JAX","Keras","MXNet"],
-    "React": ["Vue","Angular","Svelte","Next.js"],
-    "FastAPI": ["Flask","Django","Express"],
-    "PostgreSQL": ["MySQL","SQLite","MongoDB"],
-    "Docker": ["Kubernetes","Podman"],
-    "AWS": ["GCP","Azure","DigitalOcean"],
-    "LangChain": ["LlamaIndex","Haystack","AutoGen"],
-    "BERT": ["RoBERTa","DistilBERT","GPT-2","T5"],
-    "YOLOv8": ["YOLOv5","Detectron2","EfficientDet"],
+    "python": ["julia","r","scala","cython","cpython","micropython","jython","pypy"],
+    "pytorch": ["tensorflow","jax","keras","mxnet","torch"],
+    "react": ["vue","angular","svelte","next.js","react.js","redux"],
+    "fastapi": ["flask","django","express","pydantic","uvicorn"],
+    "postgresql": ["mysql","sqlite","mongodb","postgres","sql","supabase","cockroachdb"],
+    "docker": ["kubernetes","podman","containerization","docker-compose","containerd"],
+    "aws": ["gcp","azure","digitalocean","amazon web services","ec2","s3","lambda"],
+    "langchain": ["llamaindex","haystack","autogen"],
+    "bert": ["roberta","distilbert","gpt-2","t5"],
+    "yolov8": ["yolov5","detectron2","efficientdet"],
 }
+
+try:
+    adj_path = "skill_adjacency_map.json"
+    if os.path.exists(adj_path):
+        with open(adj_path, encoding="utf-8") as f:
+            custom_adj = json.load(f)
+            for k, v in custom_adj.items():
+                k_lower = k.lower().strip()
+                v_lowers = [item.lower().strip() for item in v]
+                if k_lower in SKILL_ADJACENCY:
+                    SKILL_ADJACENCY[k_lower] = list(set(SKILL_ADJACENCY[k_lower] + v_lowers))
+                else:
+                    SKILL_ADJACENCY[k_lower] = v_lowers
+except Exception as e:
+    print(f"[WARN] Could not load skill_adjacency_map.json: {e}")
 
 LEVEL_MAP = {
     "intern":0.10,"trainee":0.12,"junior":0.20,"associate":0.28,
@@ -53,16 +68,27 @@ LEVEL_MAP = {
     "vp":0.95,"cto":1.0,"founder":0.88
 }
 
+LEVEL_ORDER = [
+    "cto", "vp", "director", "architect", "principal", "staff", "lead", "senior",
+    "intern", "trainee", "junior", "associate", "founder", "manager", "head",
+    "mid", "engineer", "developer", "analyst"
+]
+
 SIZE_MAP = {"1-10":1,"11-50":2,"51-200":3,"201-500":4,
             "501-1000":5,"1001-5000":6,"5001-10000":7,"10001+":8}
 
 # ── TEXT UTILS ────────────────────────────────────────────────────
 def build_candidate_text(c):
     p = c.get('profile', {})
-    skills_text = " ".join([s.get('name','') for s in c.get('skills', [])])
-    career_text = " ".join([jh.get('description','') for jh in c.get('career_history', [])])
-    titles_text = " ".join([jh.get('title','') for jh in c.get('career_history', [])])
-    return f"{p.get('summary','')} {p.get('headline','')} {p.get('current_title','')} {skills_text} {career_text} {titles_text}"
+    skills_text = " ".join([s.get('name') or '' for s in c.get('skills', [])])
+    career_text = " ".join([jh.get('description') or '' for jh in c.get('career_history', [])])
+    titles_text = " ".join([jh.get('title') or '' for jh in c.get('career_history', [])])
+    full_text = f"{p.get('summary') or ''} {p.get('headline') or ''} {p.get('current_title') or ''} {skills_text} {career_text} {titles_text}"
+    # Truncate to first 300 words to speed up CPU encoding (model max length is 256 tokens)
+    words = full_text.split()
+    if len(words) > 300:
+        return " ".join(words[:300])
+    return full_text
 
 def tokenize(text):
     STOP = {"a","an","the","and","or","in","on","at","to","for","of","with","is","are","was","were","i","we","you"}
@@ -70,7 +96,7 @@ def tokenize(text):
 
 def is_non_tech_candidate(c, jd_core, jd_adjacent):
     p = c.get('profile', {})
-    title = p.get('current_title', '').lower().strip()
+    title = (p.get('current_title') or '').lower().strip()
     if not title:
         return False
         
@@ -96,7 +122,7 @@ def is_non_tech_candidate(c, jd_core, jd_adjacent):
     has_tech_keyword = any(kw in title_words or kw in title for kw in TECH_KEYWORDS)
     
     # Get candidate skills
-    cand_skills = [s.get('name', '').lower().strip() for s in c.get('skills', [])]
+    cand_skills = [(s.get('name') or '').lower().strip() for s in c.get('skills', [])]
     
     GENERAL_TECH_SKILLS = {
         "python", "pytorch", "tensorflow", "keras", "scikit-learn", "numpy", "pandas",
@@ -141,14 +167,17 @@ def sig_skills(candidate_skills, assessment_scores):
     if not JD_CORE_SKILLS:
         return 0.5
     PROF = {'beginner':0.4,'intermediate':0.6,'advanced':0.85,'expert':1.0}
-    cand_map = {s.get('name','').lower(): s for s in candidate_skills}
+    cand_map = {(s.get('name') or '').lower().strip(): s for s in candidate_skills if s.get('name')}
     score = 0.0
+    
+    # Case-insensitive assessment scores
+    asmnt_map = {k.lower().strip(): v for k, v in (assessment_scores or {}).items()}
+    
     for jd_skill in JD_CORE_SKILLS:
-        jl = jd_skill.lower()
+        jl = jd_skill.lower().strip()
         if jl in cand_map:
             s = cand_map[jl]
-            # Use test score override if candidate scored >= 70
-            asmnt_val = assessment_scores.get(jd_skill, 0)
+            asmnt_val = asmnt_map.get(jl, 0)
             if asmnt_val >= 70:
                 base = 1.0
             else:
@@ -157,8 +186,8 @@ def sig_skills(candidate_skills, assessment_scores):
             asmnt = (asmnt_val / 100) * 0.10
             score += min(base + dur + asmnt, 1.0)
         else:
-            adj_list = SKILL_ADJACENCY.get(jd_skill, [])
-            if any(a.lower() in cand_map for a in adj_list):
+            adj_list = SKILL_ADJACENCY.get(jl, [])
+            if any(a.lower().strip() in cand_map for a in adj_list):
                 score += 0.40
     return min(score / max(len(JD_CORE_SKILLS), 1), 1.0)
 
@@ -166,16 +195,31 @@ def sig_career(c):
     p = c.get('profile', {})
     career = c.get('career_history', [])
     edu = c.get('education', [])
-    title = p.get('current_title','').lower()
-    seniority = next((v for k,v in LEVEL_MAP.items() if k in title), 0.35)
+    
+    # Title precedence seniority lookup
+    title = (p.get('current_title') or '').lower()
+    seniority = 0.35
+    for k in LEVEL_ORDER:
+        if k in title:
+            seniority = LEVEL_MAP[k]
+            break
+            
+    # Normalized experience depth (15 year cap)
+    years = float(p.get('years_of_experience') or 0.0)
+    exp_score = min(years / 15.0, 1.0)
+            
+    # Chronological progression from oldest to newest company size
     sizes = [SIZE_MAP.get(jh.get('company_size','1-10'), 1) for jh in career]
-    prog = max((sizes[-1]-sizes[0])/7, 0.0) if len(sizes) > 1 else 0.0
+    prog = max((sizes[0] - sizes[-1]) / 7, 0.0) if len(sizes) > 1 else 0.0
+    
     tier_bonus = {'tier_1':0.15,'tier_2':0.10,'tier_3':0.05,'tier_4':0.0,'unknown':0.02}
     best_tier = max((tier_bonus.get(e.get('tier','unknown'),0.02) for e in edu), default=0.02)
-    score = min(seniority*0.50 + prog*0.30 + best_tier*0.20, 1.0)
+    
+    # Blended Trajectory score
+    score = min(seniority*0.40 + exp_score*0.20 + prog*0.20 + best_tier*0.20, 1.0)
     
     # Consulting company penalty
-    curr_company = p.get('current_company', '').lower()
+    curr_company = (p.get('current_company') or '').lower()
     consulting_firms = ["tcs", "tata consultancy services", "infosys", "wipro", "cognizant",
                         "accenture", "capgemini", "tech mahindra", "hcl", "hcltech", "l&t", "lnt", "mindtree"]
     if any(comp in curr_company for comp in consulting_firms):
@@ -184,27 +228,40 @@ def sig_career(c):
     return score
 
 def sig_behavioral(rs):
+    if not rs:
+        rs = {}
     try:
-        last_active = date.fromisoformat(rs.get('last_active_date', '').split('T')[0])
+        last_active = date.fromisoformat((rs.get('last_active_date') or '').split('T')[0])
         days_ago = (date.today() - last_active).days
     except Exception:
         days_ago = 30
     freshness = max(0.0, 1.0 - days_ago/90)
-    completeness = rs.get('profile_completeness_score', 80)/100
     
-    response_rate = rs.get('recruiter_response_rate', 0.5)
-    resp_time  = max(0, 1 - rs.get('avg_response_time_hours', 24)/72)
-    interview  = rs.get('interview_completion_rate', 0.5)
+    completeness_val = rs.get('profile_completeness_score')
+    completeness = (80 if completeness_val is None else completeness_val)/100
+    
+    response_rate = rs.get('recruiter_response_rate')
+    if response_rate is None:
+        response_rate = 0.5
+        
+    resp_time_val = rs.get('avg_response_time_hours')
+    resp_time_val = 24 if resp_time_val is None else resp_time_val
+    resp_time  = max(0, 1 - resp_time_val/72)
+    
+    interview = rs.get('interview_completion_rate')
+    if interview is None:
+        interview = 0.5
+        
     engagement = response_rate*0.4 + resp_time*0.3 + interview*0.3
     
-    gh = rs.get('github_activity_score', -1)
-    github = 0.3 if gh == -1 else gh/100
+    gh = rs.get('github_activity_score')
+    github = 0.3 if (gh is None or gh == -1) else gh/100
     
-    offer = rs.get('offer_acceptance_rate', -1)
-    offer_n = 0.5 if offer == -1 else max(offer, 0)
+    offer = rs.get('offer_acceptance_rate')
+    offer_n = 0.5 if (offer is None or offer == -1) else max(offer, 0)
     
     # Notice Period Score (10% weight)
-    notice = rs.get('notice_period_days', 30)
+    notice = rs.get('notice_period_days')
     if notice is None:
         notice = 30
     try:
@@ -221,7 +278,7 @@ def sig_behavioral(rs):
     
     # Relocation or Remote Work Mode Bonus (+0.05)
     relocate = rs.get('willing_to_relocate', False)
-    work_mode = rs.get('preferred_work_mode', '').lower()
+    work_mode = (rs.get('preferred_work_mode') or '').lower()
     bonus = 0.0
     if relocate or work_mode == "remote" or work_mode == "hybrid":
         bonus = 0.05
@@ -243,8 +300,9 @@ def sig_domain(c):
     if not JD_DOMAIN_KW:
         return 0.5
     p = c.get('profile', {})
-    industries = [p.get('current_industry','')] + [jh.get('industry','') for jh in c.get('career_history',[])]
-    text = (p.get('summary','') + ' ' + p.get('headline','') + ' ' + ' '.join(industries)).lower()
+    industries = [p.get('current_industry') or ''] + [jh.get('industry') or '' for jh in c.get('career_history',[])]
+    industries = [ind for ind in industries if ind]
+    text = ((p.get('summary') or '') + ' ' + (p.get('headline') or '') + ' ' + ' '.join(industries)).lower()
     hits = sum(1 for kw in JD_DOMAIN_KW if kw.lower() in text)
     return min(hits / max(len(JD_DOMAIN_KW), 1), 1.0)
 
