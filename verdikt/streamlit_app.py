@@ -1,14 +1,35 @@
 import streamlit as st
-import json
-import numpy as np
-import time
-from datetime import date
-from sentence_transformers import SentenceTransformer
-import re
-from docx import Document
-import pandas as pd
-import uuid
-import plotly.graph_objects as go
+import sys
+
+# Diagnostic import wrapper
+try:
+    import json
+    import numpy as np
+    import time
+    from datetime import date
+    from sentence_transformers import SentenceTransformer
+    import re
+    from docx import Document
+    import pandas as pd
+    import uuid
+    import plotly.graph_objects as go
+except Exception as e:
+    st.error(f"🚨 Calipr Diagnostic Error — Import Failure: {e}")
+    st.write("### Diagnostics Information")
+    st.write(f"**Python Version:** {sys.version}")
+    st.write(f"**Executable:** {sys.executable}")
+    st.write("### sys.path:")
+    st.code("\n".join(sys.path))
+    
+    # Try listing installed packages via importlib.metadata
+    try:
+        import importlib.metadata
+        pkgs = sorted([f"{dist.metadata['Name']}=={dist.version}" for dist in importlib.metadata.distributions()])
+        st.write("### Installed Packages in Space:")
+        st.code("\n".join(pkgs))
+    except Exception as err:
+        st.write(f"Could not list packages: {err}")
+    st.stop()
 
 # Safe import of PdfReader
 try:
