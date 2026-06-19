@@ -462,11 +462,16 @@ hr {
 .pwd-bar.strong { background: #00D4AA; }
 
 /* ── CHECKBOX STYLING ── */
-/* Checkbox Text Color */
+/* Checkbox Text Color under all states (including checked) */
 [data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] p,
 [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
 [data-testid="stCheckbox"] label p,
-[data-testid="stCheckbox"] p {
+[data-testid="stCheckbox"] p,
+[data-testid="stCheckbox"] input:checked ~ div p,
+[data-testid="stCheckbox"] input:checked ~ span,
+[data-testid="stCheckbox"] input:checked ~ div,
+[data-testid="stCheckbox"] [aria-checked="true"] p,
+[data-testid="stCheckbox"] [aria-checked="true"] span {
     color: #374151 !important;
     font-family: 'Inter', sans-serif !important;
     font-size: 13.5px !important;
@@ -489,8 +494,7 @@ hr {
     box-shadow: 0 0 0 3px rgba(74, 144, 255, 0.15) !important;
 }
 
-/* Checked Checkbox state */
-[data-testid="stCheckbox"] input:checked + div,
+/* Checked Checkbox state - Target only the checkbox square */
 [data-testid="stCheckbox"] input:checked + div > span,
 [data-testid="stCheckbox"] input:checked + span,
 [data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"] {
