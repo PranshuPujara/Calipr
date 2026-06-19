@@ -480,6 +480,7 @@ hr {
 
 /* Checkbox Square Border & Background (Unchecked) */
 [data-testid="stCheckbox"] label > span:first-child,
+[data-testid="stCheckbox"] label > div:first-of-type,
 [data-testid="stCheckbox"] div[role="checkbox"] {
     border: 1px solid #D1D5DB !important;
     border-radius: 6px !important;
@@ -489,25 +490,41 @@ hr {
 
 /* Checkbox Hover */
 [data-testid="stCheckbox"]:hover label > span:first-child,
+[data-testid="stCheckbox"]:hover label > div:first-of-type,
 [data-testid="stCheckbox"]:hover div[role="checkbox"] {
     border-color: #4A90FF !important;
     box-shadow: 0 0 0 3px rgba(74, 144, 255, 0.15) !important;
 }
 
-/* Checked Checkbox state - Target only the checkbox square */
-[data-testid="stCheckbox"] input:checked + div > span,
+/* Checked Checkbox state - Target only the checkbox square (both div and span) */
+[data-testid="stCheckbox"] input:checked ~ span:first-of-type,
+[data-testid="stCheckbox"] input:checked ~ span:first-of-type span,
+[data-testid="stCheckbox"] input:checked ~ div:first-of-type,
+[data-testid="stCheckbox"] input:checked ~ div:first-of-type div,
 [data-testid="stCheckbox"] input:checked + span,
-[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"] {
+[data-testid="stCheckbox"] input:checked + span span,
+[data-testid="stCheckbox"] input:checked + div,
+[data-testid="stCheckbox"] input:checked + div div,
+[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"],
+[data-testid="stCheckbox"] div[role="checkbox"][aria-checked="true"] > div {
     background-color: #4A90FF !important;
     border-color: #4A90FF !important;
 }
 
-/* Checkmark color (make it white) */
+/* Checkmark color (make it white) and handle stroke/fill correctly for visibility */
 [data-testid="stCheckbox"] svg,
 [data-testid="stCheckbox"] [role="checkbox"] svg {
     color: #FFFFFF !important;
-    fill: #FFFFFF !important;
     stroke: #FFFFFF !important;
+    fill: none !important;
+    display: block !important;
+    visibility: visible !important;
+}
+[data-testid="stCheckbox"] svg *,
+[data-testid="stCheckbox"] [role="checkbox"] svg * {
+    stroke: #FFFFFF !important;
+    fill: none !important;
+    stroke-width: 3px !important; /* slightly thicker for readability */
 }
 </style>
 """
