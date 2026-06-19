@@ -729,6 +729,48 @@ try:
 except Exception as e:
     pass
 
+# ── PASSWORD PROTECTION ───────────────────────────────────────────
+def check_password():
+    """Returns True if the user had the correct password."""
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    if st.session_state["password_correct"]:
+        return True
+
+    # Show login UI
+    st.markdown("""
+    <div style="max-width: 400px; margin: 80px auto 20px; padding: 40px; background: #FFFFFF; border-radius: 16px; 
+                box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e4e2e2; text-align: center; font-family: Inter, sans-serif;">
+        <span style="font-size: 40px;">🏆</span>
+        <h2 style="margin-top: 15px; margin-bottom: 8px; color: #1a1615; font-family: 'Open Runde', sans-serif; letter-spacing: -0.02em;">Calipr AI Sandbox</h2>
+        <p style="font-size: 13.5px; color: #757170; margin-bottom: 30px; line-height: 1.5;">
+            Enter the hackathon preview password to access the candidate ranking dashboard.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        password = st.text_input("Enter Password", type="password", label_visibility="collapsed", placeholder="Enter Password...")
+        if password:
+            if password == "calipr-demo":
+                st.session_state["password_correct"] = True
+                st.rerun()
+            else:
+                st.error("😕 Password incorrect")
+                
+    st.markdown("""
+    <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #757170; font-family: Inter, sans-serif;">
+        Tip for Hackathon Judges: Use password <strong>calipr-demo</strong>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    return False
+
+if not check_password():
+    st.stop()
+
 # Initialize session state variables
 if "uploaded_candidates" not in st.session_state:
     st.session_state.uploaded_candidates = []
