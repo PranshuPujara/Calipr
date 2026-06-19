@@ -62,6 +62,14 @@ AUTH_CSS = """
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
 }
 
+.stTextInput div[data-testid="stTextInputRootElement"] div,
+.stTextInput div[data-baseweb="input"] div {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 .stTextInput div[data-testid="stTextInputRootElement"]:focus-within,
 .stTextInput div[data-baseweb="input"]:focus-within {
     border-color: #84b9ef !important;

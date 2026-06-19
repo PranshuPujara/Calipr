@@ -243,6 +243,15 @@ h3 {
     padding: 12px 16px !important;
 }
 
+.stTextInput div[data-testid="stTextInputRootElement"] div,
+.stTextInput div[data-baseweb="input"] div,
+.stTextArea div[data-baseweb="textarea"] div {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 .stTextInput div[data-testid="stTextInputRootElement"],
 .stTextInput div[data-baseweb="input"] {
     height: 42px !important;
