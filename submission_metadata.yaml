@@ -1,0 +1,45 @@
+# Redrob Hackathon — Submission Metadata Template
+team_name: "Calipr"
+
+primary_contact:
+  name: "Aum Santoki"
+  email: "aumsantoki99@gmail.com"
+  phone: "+91-XXXXXXXXXX"
+
+team_members:
+  - name: "Aum Santoki"
+    email: "aumsantoki99@gmail.com"
+    role: "ML Engineer"
+
+github_repo: "https://github.com/aumsantoki99-web/Calipr"
+sandbox_link: "https://huggingface.co/spaces/Aumus/calipr"
+
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+
+compute:
+  platform: "Local PC"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.11.4"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: true
+  pre_computation_time_minutes: 5
+
+ai_tools_used:
+  - "Gemini"
+  - "Claude"
+
+ai_usage_summary: |
+  Used Gemini for coding assistance and strategy planning. Used Claude for architecture review.
+
+methodology_summary: |
+  A two-phase hybrid ranker designed for scale and strict offline constraints. Phase A extracts JD features offline using an LLM. Phase B is a 100% offline pipeline running on CPU: first pre-filtering candidates via BM25, and then scoring the top 8000 using local sentence-transformers (all-MiniLM-L6-v2) and 5 weighted signals.
+
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
