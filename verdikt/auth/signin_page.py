@@ -14,22 +14,16 @@ def render_signin_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # Logo
+    # Top-Left Logo
     st.markdown("""
-    <div class="auth-logo">
-        <div class="auth-logo-mark">C</div>
-        <div class="auth-logo-name">Calipr</div>
-        <div class="auth-logo-tagline">AI Candidate Ranking Platform</div>
+    <div class="top-left-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #0A0A0A; vertical-align: middle; margin-right: 8px;">
+            <path d="M4 2V22" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+            <path d="M4 14H19" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+            <path d="M13.5 9V22" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+        </svg>
+        <span style="font-size: 18px; font-weight: 800; color: #0A0A0A; letter-spacing: -0.04em; font-family: 'Inter', sans-serif; vertical-align: middle;">Calipr</span>
     </div>
-    """, unsafe_allow_html=True)
-
-    # Card open
-    st.markdown('<div class="auth-card">', unsafe_allow_html=True)
-
-    # Heading
-    st.markdown("""
-    <div class="auth-heading">Welcome back</div>
-    <div class="auth-subheading">Sign in to your Calipr account to continue ranking.</div>
     """, unsafe_allow_html=True)
 
     # Google OAuth button (static UI)
@@ -51,10 +45,8 @@ def render_signin_page():
     """, unsafe_allow_html=True)
 
     # Form fields
-    email    = st.text_input("Email address", placeholder="you@company.com",
-                              key="signin_email")
-    password = st.text_input("Password", placeholder="Enter your password",
-                              type="password", key="signin_password")
+    email    = st.text_input("Email address", placeholder="you@company.com", key="signin_email")
+    password = st.text_input("Password", placeholder="Enter your password", type="password", key="signin_password")
 
     # Forgot password link
     st.markdown("""
@@ -64,7 +56,7 @@ def render_signin_page():
     """, unsafe_allow_html=True)
 
     # Sign In button
-    if st.button("Sign In", key="signin_btn", use_container_width=True):
+    if st.button("Sign In", key="signin_btn", use_container_width=True, type="primary"):
         if not email or not password:
             st.error("Please enter your email and password.")
         else:
@@ -91,28 +83,8 @@ def render_signin_page():
                     else:
                         st.error(f"Sign in failed: {e}")
 
-    # Card close
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Switch to Sign Up
-    st.markdown("""
-    <div class="switch-row">
-        Don't have an account?
-        <span class="auth-link" style="margin-left:4px;">Create one</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Terms
-    st.markdown("""
-    <div class="terms-text">
-        By signing in, you agree to our
-        <a>Terms of Service</a> and <a>Privacy Policy</a>.
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Handle toggle via session state
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("Create an account →", key="goto_signup"):
-            st.session_state.auth_page = "signup"
-            st.rerun()
+    # Switch to Sign Up (Only one way to toggle)
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    if st.button("Don't have an account? Create one", key="goto_signup", type="secondary", use_container_width=True):
+        st.session_state.auth_page = "signup"
+        st.rerun()

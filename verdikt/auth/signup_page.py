@@ -13,24 +13,15 @@ def render_signup_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # Logo
+    # Top-Left Logo
     st.markdown("""
-    <div class="auth-logo">
-        <div class="auth-logo-mark">C</div>
-        <div class="auth-logo-name">Calipr</div>
-        <div class="auth-logo-tagline">AI Candidate Ranking Platform</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Card
-    st.markdown('<div class="auth-card">', unsafe_allow_html=True)
-
-    # Heading
-    st.markdown("""
-    <div class="auth-heading">Create your account</div>
-    <div class="auth-subheading">
-        Start ranking candidates with AI precision.<br>
-        Free during the Redrob Hackathon.
+    <div class="top-left-logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #0A0A0A; vertical-align: middle; margin-right: 8px;">
+            <path d="M4 2V22" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+            <path d="M4 14H19" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+            <path d="M13.5 9V22" stroke="currentColor" stroke-width="3.2" stroke-linecap="square"/>
+        </svg>
+        <span style="font-size: 18px; font-weight: 800; color: #0A0A0A; letter-spacing: -0.04em; font-family: 'Inter', sans-serif; vertical-align: middle;">Calipr</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -86,7 +77,7 @@ def render_signup_page():
     agree = st.checkbox("I agree to the Terms of Service and Privacy Policy", key="signup_terms")
 
     # Sign Up button
-    if st.button("Create Account", key="signup_btn", use_container_width=True):
+    if st.button("Create Account", key="signup_btn", use_container_width=True, type="primary"):
         if not full_name:
             st.error("Please enter your full name.")
         elif not email or "@" not in email:
@@ -114,18 +105,8 @@ def render_signup_page():
                     else:
                         st.error(f"Sign up failed: {e}")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # Switch to Sign In
-    st.markdown("""
-    <div class="switch-row">
-        Already have an account?
-        <span class="auth-link" style="margin-left:4px;">Sign in</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("← Back to Sign In", key="goto_signin"):
-            st.session_state.auth_page = "signin"
-            st.rerun()
+    # Switch to Sign In (Only one way to toggle)
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    if st.button("Already have an account? Sign in", key="goto_signin", type="secondary", use_container_width=True):
+        st.session_state.auth_page = "signin"
+        st.rerun()

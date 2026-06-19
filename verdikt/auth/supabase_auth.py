@@ -62,8 +62,9 @@ AUTH_CSS = """
     letter-spacing: -0.01em !important;
 }
 
-/* ── PRIMARY BUTTON ── */
-.stButton > button {
+/* ── BUTTONS ── */
+/* Primary Buttons */
+div.stButton > button[kind="primary"] {
     background: #0A0A0A !important;
     color: #FFFFFF !important;
     border: none !important;
@@ -71,22 +72,54 @@ AUTH_CSS = """
     font-family: 'Inter', sans-serif !important;
     font-weight: 600 !important;
     font-size: 15px !important;
-    padding: 0 24px !important;
     height: 48px !important;
     width: 100% !important;
     transition: all 0.2s ease !important;
     letter-spacing: -0.01em !important;
     cursor: pointer !important;
 }
-.stButton > button:hover {
+div.stButton > button[kind="primary"]:hover {
     background: #1A1A1A !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
 }
-.stButton > button:active {
+div.stButton > button[kind="primary"]:active {
     transform: translateY(0) !important;
     box-shadow: none !important;
 }
+
+/* Secondary/Link Buttons */
+div.stButton > button[kind="secondary"] {
+    background: transparent !important;
+    color: #4A90FF !important;
+    border: none !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: color 0.15s !important;
+}
+div.stButton > button[kind="secondary"]:hover {
+    color: #2563EB !important;
+    text-decoration: underline !important;
+    background: transparent !important;
+}
+
+/* ── TOP LEFT LOGO ── */
+.top-left-logo {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    font-family: 'Inter', sans-serif !important;
+}
+
 
 /* ── ALERTS ── */
 .stSuccess {
