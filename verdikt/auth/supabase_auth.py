@@ -2,6 +2,8 @@ import os
 from supabase import create_client, Client
 import streamlit as st
 
+SUPABASE_URL = st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL") or ""
+
 AUTH_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -527,6 +529,16 @@ hr {
     stroke-width: 3px !important; /* slightly thicker for readability */
 }
 </style>
+<script>
+    if (window.location.hash && window.location.hash.indexOf('access_token=') !== -1) {
+        var hash = window.location.hash.substring(1);
+        var params = new URLSearchParams(hash);
+        var token = params.get('access_token');
+        if (token) {
+            window.location.href = window.location.origin + window.location.pathname + '?access_token=' + token;
+        }
+    }
+</script>
 """
 
 def get_supabase_client() -> Client:
@@ -579,3 +591,41 @@ def reset_password(email: str):
     """Send password reset email."""
     client = get_supabase_client()
     client.auth.reset_password_email(email)
+
+def check_oauth_callback():
+    """Check query parameters for access_token from Google OAuth callback."""
+    params = {}
+    try:
+        params = st.query_params
+    except AttributeError:
+        try:
+            params = st.experimental_get_query_params()
+        except:
+            pass
+
+    if "access_token" in params:
+        access_token = params["access_token"]
+        if isinstance(access_token, list):
+            access_token = access_token[0]
+            
+        try:
+            client = get_supabase_client()
+            res = client.auth.get_user(access_token)
+            user = res.user
+            if user:
+                st.session_state.user         = user
+                st.session_state.access_token = access_token
+                st.session_state.user_email   = user.email
+                st.session_state.user_name    = user.user_metadata.get("full_name") or user.email.split("@")[0]
+                
+                # Clear query parameters
+                try:
+                    st.query_params.clear()
+                except AttributeError:
+                    try:
+                        st.experimental_set_query_params()
+                    except:
+                        pass
+                st.rerun()
+        except Exception as e:
+            st.error(f"Failed to authenticate with Google: {e}")

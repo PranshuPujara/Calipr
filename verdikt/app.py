@@ -26,7 +26,7 @@ try:
     # Auth pages imports
     from auth.signin_page import render_signin_page
     from auth.signup_page import render_signup_page
-    from auth.supabase_auth import is_authenticated, sign_out, get_current_user
+    from auth.supabase_auth import is_authenticated, sign_out, get_current_user, check_oauth_callback
 except Exception as e:
     st.error(f"🚨 Calipr Diagnostic Error — Import Failure: {e}")
     st.write("### Diagnostics Information")
@@ -50,6 +50,9 @@ try:
     from pypdf import PdfReader
 except ImportError:
     PdfReader = None
+
+# Check Google OAuth callback query parameter
+check_oauth_callback()
 
 # ── AUTH GATE ──────────────────────────────────────────────────────
 if not is_authenticated():
