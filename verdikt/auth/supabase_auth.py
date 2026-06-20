@@ -2,7 +2,11 @@ import os
 from supabase import create_client, Client
 import streamlit as st
 
-SUPABASE_URL = st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL") or ""
+def get_supabase_url() -> str:
+    try:
+        return st.secrets.get("SUPABASE_URL") or os.environ.get("SUPABASE_URL") or ""
+    except Exception:
+        return os.environ.get("SUPABASE_URL") or ""
 
 AUTH_CSS = """
 <style>
