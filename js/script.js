@@ -7,8 +7,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initMobileMenu();
-  initScrollReveal();
-  initMetricsCounters();
   initCandidateDemo();
 });
 
@@ -67,127 +65,7 @@ function initMobileMenu() {
   });
 }
 
-/* ==========================================================================
-   3. SCROLL REVEAL (INTERSECTION OBSERVER)
-   ========================================================================== */
-function initScrollReveal() {
-  const revealElements = document.querySelectorAll('.reveal, .reveal-scale');
-  if (revealElements.length === 0) return;
 
-  const revealObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in-view');
-        // Once visible, we can stop observing it
-        observer.unobserve(entry.target);
-      }
-    });
-  }, {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px' // Trigger slightly before it enters the viewport fully
-  });
-
-  revealElements.forEach(el => revealObserver.observe(el));
-
-  // Also trigger pipeline connector animation if section is in view
-  const pipelineSection = document.getElementById('how-it-works');
-  if (pipelineSection) {
-    const pipelineObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          pipelineSection.querySelector('.pipeline-flow').classList.add('in-view');
-        }
-      });
-    }, { threshold: 0.2 });
-    pipelineObserver.observe(pipelineSection);
-  }
-
-  // 3D Slant and Rotate-in scroll effect for the hero mockup
-  const heroMockup = document.getElementById('heroMockup');
-  if (heroMockup) {
-    const browserFrame = heroMockup.querySelector('.browser-frame');
-    window.addEventListener('scroll', () => {
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const rect = heroMockup.getBoundingClientRect();
-      const elementTop = rect.top + scrollY;
-      const elementHeight = rect.height;
-
-      // Calculate progress of scroll relative to mockup position
-      const startScroll = elementTop - windowHeight;
-      const endScroll = elementTop + elementHeight;
-      
-      if (scrollY >= startScroll && scrollY <= endScroll) {
-        const totalDistance = endScroll - startScroll;
-        const progress = (scrollY - startScroll) / totalDistance; // 0 to 1
-
-        // Interpolate slant/perspective transformations
-        // Start slanted backwards, rotate forward and move up as user scrolls
-        const rotateX = 25 - (progress * 25); // Slants from 25deg back to 0deg
-        const translateZ = -150 + (progress * 150); // Moves closer
-        const scale = 0.85 + (progress * 0.15); // Scales up to 1
-
-        browserFrame.style.transform = `rotateX(${rotateX}deg) translateZ(${translateZ}px) scale(${scale})`;
-      }
-    });
-  }
-}
-
-/* ==========================================================================
-   4. METRIC COUNTERS
-   ========================================================================== */
-function initMetricsCounters() {
-  const metricValues = document.querySelectorAll('.metric-value');
-  if (metricValues.length === 0) return;
-
-  const counterObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        animateCounter(entry.target);
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.5 });
-
-  metricValues.forEach(el => counterObserver.observe(el));
-
-  function animateCounter(element) {
-    const target = parseFloat(element.getAttribute('data-target'));
-    const isDecimal = element.getAttribute('data-decimal') === 'true';
-    const prefix = element.getAttribute('data-prefix') || '';
-    const suffix = element.getAttribute('data-suffix') || '';
-    const duration = 1500; // 1.5s animation
-    const startTime = performance.now();
-
-    function updateCounter(currentTime) {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      
-      // Easing out quadratic
-      const easeProgress = progress * (2 - progress);
-      const currentVal = easeProgress * target;
-
-      if (isDecimal) {
-        element.textContent = `${prefix}${currentVal.toFixed(2)}${suffix}`;
-      } else {
-        element.textContent = `${prefix}${Math.floor(currentVal)}${suffix}`;
-      }
-
-      if (progress < 1) {
-        requestAnimationFrame(updateCounter);
-      } else {
-        // Ensure final value is exact
-        if (isDecimal) {
-          element.textContent = `${prefix}${target.toFixed(2)}${suffix}`;
-        } else {
-          element.textContent = `${prefix}${target}${suffix}`;
-        }
-      }
-    }
-
-    requestAnimationFrame(updateCounter);
-  }
-}
 
 /* ==========================================================================
    5. INTERACTIVE CANDIDATE RADAR CHART DEMO

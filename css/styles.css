@@ -302,7 +302,7 @@ p {
 }
 /* ---------- HACKATHON DEMO BANNER ---------- */
 .hackathon-banner {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -1833,63 +1833,7 @@ p {
   50% { opacity: 0.5; transform: scale(0.8); }
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-scale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes count-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---------- SCROLL REVEAL ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity var(--duration-slow) var(--ease-out),
-              transform var(--duration-slow) var(--ease-out);
-}
-
-.reveal.in-view {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.reveal-delay-1 { transition-delay: 100ms; }
-.reveal-delay-2 { transition-delay: 200ms; }
-.reveal-delay-3 { transition-delay: 300ms; }
-.reveal-delay-4 { transition-delay: 400ms; }
-.reveal-delay-5 { transition-delay: 500ms; }
-
-.reveal-scale {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: opacity var(--duration-slow) var(--ease-out),
-              transform var(--duration-slow) var(--ease-out);
-}
-
-.reveal-scale.in-view {
-  opacity: 1;
-  transform: scale(1);
-}
+/* Reveal keyframes and classes removed — GSAP handles this now */
 
 /* ---------- PROBLEM/SOLUTION ---------- */
 .problem-solution {
@@ -2094,4 +2038,600 @@ p {
   .marquee-track { animation: none; }
   .reveal { opacity: 1; transform: none; }
   .reveal-scale { opacity: 1; transform: none; }
+}
+
+/* ============================================
+   GSAP DREELIO-STYLE ANIMATION CSS
+   ============================================ */
+
+/* ---------- HERO AMBIENT BLOBS ---------- */
+.hero-blob-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0;
+}
+
+.blob-1 {
+  width: 600px; height: 600px;
+  background: rgba(219, 234, 254, 0.45);
+  top: -100px; left: -80px;
+  animation: blobFloat1 18s ease-in-out infinite;
+}
+.blob-2 {
+  width: 480px; height: 480px;
+  background: rgba(241, 245, 249, 0.55);
+  top: 80px; right: -60px;
+  animation: blobFloat2 22s ease-in-out infinite;
+}
+.blob-3 {
+  width: 700px; height: 420px;
+  background: rgba(248, 250, 252, 0.5);
+  top: 240px; left: 28%;
+  animation: blobFloat3 26s ease-in-out infinite;
+}
+.blob-4 {
+  width: 360px; height: 360px;
+  background: rgba(224, 242, 254, 0.35);
+  bottom: 0; left: 8%;
+  animation: blobFloat4 20s ease-in-out infinite;
+}
+
+@keyframes blobFloat1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -30px) scale(1.06); }
+  50% { transform: translate(-20px, 25px) scale(0.97); }
+  75% { transform: translate(30px, 10px) scale(1.03); }
+}
+@keyframes blobFloat2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-50px, 40px) scale(1.04); }
+  66% { transform: translate(35px, -25px) scale(0.96); }
+}
+@keyframes blobFloat3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(20px, -40px) scale(1.02); }
+  60% { transform: translate(-30px, 20px) scale(0.98); }
+  80% { transform: translate(15px, 30px) scale(1.01); }
+}
+@keyframes blobFloat4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(45px, -20px) scale(1.05); }
+  70% { transform: translate(-25px, 35px) scale(0.95); }
+}
+
+/* ---------- FLOATING PARTICLES ---------- */
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(132, 185, 239, 0.4);
+  pointer-events: none;
+  animation: particleFloat linear infinite;
+  z-index: 1;
+}
+
+@keyframes particleFloat {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  15%  { opacity: 0.6; }
+  85%  { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-120px) translateX(var(--drift, 20px)); }
+}
+
+/* ---------- CARD HOVER MICRO-INTERACTIONS ---------- */
+.bento-card,
+.signal-card,
+.benefit-card,
+.pricing-card,
+.candidate-card,
+.contact-card {
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+  will-change: transform;
+}
+
+.bento-card:hover,
+.signal-card:hover,
+.benefit-card:hover,
+.pricing-card:hover,
+.contact-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  border-color: #D1D5DB;
+}
+
+.pricing-card.featured:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(10, 10, 10, 0.2);
+}
+
+/* ---------- BUTTON MICRO-INTERACTIONS ---------- */
+.btn-primary {
+  transition: all 0.25s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-secondary:hover,
+.btn-outline-white:hover {
+  transform: translateY(-1px);
+}
+
+/* ---------- NAVBAR TRANSITION FOR HIDE/SHOW ---------- */
+.navbar {
+  transition:
+    background 0.3s ease,
+    backdrop-filter 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hackathon-banner {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- GLASS SHIMMER SWEEP ON CARDS ---------- */
+.bento-card,
+.signal-card,
+.benefit-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card::after,
+.signal-card::after,
+.benefit-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  transform: skewX(-20deg);
+  animation: shimmerSweep 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.signal-card:nth-child(2)::after { animation-delay: 1.5s; }
+.signal-card:nth-child(3)::after { animation-delay: 3s; }
+.benefit-card:nth-child(2)::after { animation-delay: 2s; }
+.benefit-card:nth-child(3)::after { animation-delay: 4s; }
+
+@keyframes shimmerSweep {
+  0%   { left: -75%; }
+  100% { left: 125%; }
+}
+
+/* ---------- MARQUEE HOVER BEHAVIOR ---------- */
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.client-logo {
+  transition: opacity 0.2s ease;
+}
+.client-logo:hover {
+  opacity: 1 !important;
+}
+
+/* ---------- PIPELINE CONNECTOR ORIGIN ---------- */
+.pipeline-connector-fill {
+  transform-origin: left center;
+}
+
+/* ---------- REDUCED MOTION ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .hero-blob { display: none; }
+  .particle { display: none; }
+  .cloud-a, .cloud-b, .cloud-c, .cloud-d, .cloud-e, .cloud-f, .cloud-g, .cb-1, .cb-2, .cb-3, .cb-4, .cf-1, .cf-2, .cf-3 {
+    animation: none !important;
+  }
+}
+
+/* ── CLOUD SCENE CONTAINER ── */
+.cloud-scene {
+  position: absolute;
+  inset: -20% -10%;          /* overflow to prevent clipping on scroll */
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* ── CLOUD LAYERS ── */
+.cloud-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;    /* GPU accelerated */
+}
+
+/* ── BASE CLOUD SHAPE ── */
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(0px);         /* no blur on the cloud itself */
+}
+
+/* Each cloud is built from overlapping pseudo-elements and gradients */
+/* This creates the fluffy, multi-lobe cloud shape */
+
+/* ── LAYER 1 CLOUDS (Large, back, slow) ── */
+.cloud-a {
+  width: 680px;
+  height: 200px;
+  top: 8%;
+  left: -5%;
+  background:
+    radial-gradient(ellipse 55% 70% at 25% 60%, rgba(255,255,255,0.92) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 65% at 50% 50%, rgba(255,255,255,0.88) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 75% at 75% 55%, rgba(255,255,255,0.85) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 40% at 50% 80%, rgba(240,248,255,0.70) 0%, transparent 100%);
+  animation: cloudDriftA 28s ease-in-out infinite;
+  filter: blur(8px);
+  opacity: 0.75;
+}
+
+.cloud-b {
+  width: 520px;
+  height: 160px;
+  top: 18%;
+  right: -2%;
+  background:
+    radial-gradient(ellipse 50% 70% at 20% 55%, rgba(255,255,255,0.88) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 65% at 55% 45%, rgba(255,255,255,0.90) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 75% at 80% 60%, rgba(255,255,255,0.82) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 35% at 50% 85%, rgba(235,245,255,0.65) 0%, transparent 100%);
+  animation: cloudDriftB 34s ease-in-out infinite;
+  filter: blur(10px);
+  opacity: 0.65;
+}
+
+.cloud-c {
+  width: 760px;
+  height: 180px;
+  top: 35%;
+  left: 15%;
+  background:
+    radial-gradient(ellipse 45% 75% at 20% 50%, rgba(255,255,255,0.80) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 70% at 48% 45%, rgba(255,255,255,0.85) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 75% at 72% 55%, rgba(255,255,255,0.78) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 30% at 50% 90%, rgba(240,248,255,0.55) 0%, transparent 100%);
+  animation: cloudDriftC 40s ease-in-out infinite;
+  filter: blur(12px);
+  opacity: 0.55;
+}
+
+/* ── LAYER 2 CLOUDS (Medium, mid-speed) ── */
+.cloud-d {
+  width: 440px;
+  height: 140px;
+  top: 12%;
+  left: 30%;
+  background:
+    radial-gradient(ellipse 50% 72% at 22% 52%, rgba(255,255,255,0.85) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 68% at 52% 42%, rgba(255,255,255,0.88) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 75% at 78% 58%, rgba(255,255,255,0.80) 0%, transparent 70%),
+    radial-gradient(ellipse 85% 32% at 50% 88%, rgba(230,242,255,0.60) 0%, transparent 100%);
+  animation: cloudDriftD 24s ease-in-out infinite;
+  filter: blur(6px);
+  opacity: 0.60;
+}
+
+.cloud-e {
+  width: 380px;
+  height: 120px;
+  top: 55%;
+  right: 10%;
+  background:
+    radial-gradient(ellipse 52% 70% at 25% 55%, rgba(255,255,255,0.82) 0%, transparent 70%),
+    radial-gradient(ellipse 48% 68% at 55% 45%, rgba(255,255,255,0.85) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 72% at 80% 58%, rgba(255,255,255,0.78) 0%, transparent 70%),
+    radial-gradient(ellipse 88% 30% at 50% 86%, rgba(235,245,255,0.55) 0%, transparent 100%);
+  animation: cloudDriftE 30s ease-in-out infinite;
+  filter: blur(8px);
+  opacity: 0.50;
+}
+
+/* ── LAYER 3 CLOUDS (Small, fast, closest) ── */
+.cloud-f {
+  width: 280px;
+  height: 90px;
+  top: 22%;
+  left: 55%;
+  background:
+    radial-gradient(ellipse 52% 72% at 24% 54%, rgba(255,255,255,0.78) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 68% at 53% 44%, rgba(255,255,255,0.82) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 74% at 79% 57%, rgba(255,255,255,0.75) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 28% at 50% 88%, rgba(230,242,255,0.50) 0%, transparent 100%);
+  animation: cloudDriftF 20s ease-in-out infinite;
+  filter: blur(5px);
+  opacity: 0.45;
+}
+
+.cloud-g {
+  width: 320px;
+  height: 100px;
+  top: 68%;
+  left: 5%;
+  background:
+    radial-gradient(ellipse 50% 70% at 23% 53%, rgba(255,255,255,0.75) 0%, transparent 70%),
+    radial-gradient(ellipse 52% 68% at 52% 43%, rgba(255,255,255,0.80) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 73% at 78% 57%, rgba(255,255,255,0.72) 0%, transparent 70%),
+    radial-gradient(ellipse 86% 28% at 50% 87%, rgba(235,245,255,0.48) 0%, transparent 100%);
+  animation: cloudDriftG 26s ease-in-out infinite;
+  filter: blur(6px);
+  opacity: 0.40;
+}
+
+/* ── IDLE FLOAT ANIMATIONS (independent of scroll) ── */
+@keyframes cloudDriftA {
+  0%,100% { transform: translate(0px,   0px)  scale(1.00); }
+  25%      { transform: translate(28px, -18px) scale(1.04); }
+  50%      { transform: translate(-15px, 12px) scale(0.97); }
+  75%      { transform: translate(20px,  8px)  scale(1.02); }
+}
+@keyframes cloudDriftB {
+  0%,100% { transform: translate(0px,   0px)  scale(1.00); }
+  30%      { transform: translate(-35px, 22px) scale(1.03); }
+  65%      { transform: translate(25px, -16px) scale(0.96); }
+}
+@keyframes cloudDriftC {
+  0%,100% { transform: translate(0px,  0px)   scale(1.00); }
+  20%      { transform: translate(18px, -28px) scale(1.02); }
+  55%      { transform: translate(-22px, 18px) scale(0.98); }
+  80%      { transform: translate(12px,  10px) scale(1.01); }
+}
+@keyframes cloudDriftD {
+  0%,100% { transform: translate(0px,  0px)   scale(1.00); }
+  33%      { transform: translate(-20px, 15px) scale(1.03); }
+  66%      { transform: translate(30px, -10px) scale(0.97); }
+}
+@keyframes cloudDriftE {
+  0%,100% { transform: translate(0px, 0px)    scale(1.00); }
+  40%      { transform: translate(22px, -20px) scale(1.04); }
+  70%      { transform: translate(-18px, 15px) scale(0.96); }
+}
+@keyframes cloudDriftF {
+  0%,100% { transform: translate(0px, 0px)    scale(1.00); }
+  45%      { transform: translate(-25px, 18px) scale(1.05); }
+  75%      { transform: translate(20px, -12px) scale(0.95); }
+}
+@keyframes cloudDriftG {
+  0%,100% { transform: translate(0px,  0px)   scale(1.00); }
+  35%      { transform: translate(32px, -22px) scale(1.03); }
+  60%      { transform: translate(-20px, 16px) scale(0.97); }
+}
+
+/* ── CTA SECTION BASE ── */
+.cta-section {
+  position: relative;
+  padding: 140px 24px;
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;        /* creates new stacking context */
+}
+
+/* ── CLOUD BG CONTAINER ── */
+.cta-cloud-bg {
+  position: absolute;
+  inset: -30% -10%;          /* overflow to give parallax room */
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SKY GRADIENT BASE ── */
+.cta-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      #f8faff 0%,
+      #eef4ff 25%,
+      #e4edff 50%,
+      #dde8ff 75%,
+      #d8e4ff 100%
+    );
+}
+
+/* ── CTA CLOUD SHAPES ── */
+.cta-cloud {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+/* ── BACK LAYER CLOUDS (slower parallax) ── */
+.cb-1 {
+  width: 900px;
+  height: 260px;
+  top: 15%;
+  left: -8%;
+  background:
+    radial-gradient(ellipse 55% 72% at 18% 55%, rgba(255,255,255,0.96) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 70% at 40% 45%, rgba(255,255,255,0.94) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 74% at 62% 52%, rgba(255,255,255,0.92) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 72% at 82% 48%, rgba(255,255,255,0.88) 0%, transparent 68%),
+    radial-gradient(ellipse 100% 35% at 50% 88%, rgba(220,235,255,0.75) 0%, transparent 100%);
+  filter: blur(4px);
+  opacity: 0.90;
+  animation: ctaCloudDrift1 32s ease-in-out infinite;
+}
+
+.cb-2 {
+  width: 700px;
+  height: 200px;
+  top: 45%;
+  right: -5%;
+  background:
+    radial-gradient(ellipse 52% 70% at 22% 54%, rgba(255,255,255,0.94) 0%, transparent 68%),
+    radial-gradient(ellipse 48% 68% at 48% 44%, rgba(255,255,255,0.92) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 72% at 74% 52%, rgba(255,255,255,0.90) 0%, transparent 70%),
+    radial-gradient(ellipse 95% 32% at 50% 86%, rgba(215,232,255,0.70) 0%, transparent 100%);
+  filter: blur(6px);
+  opacity: 0.80;
+  animation: ctaCloudDrift2 38s ease-in-out infinite;
+}
+
+.cb-3 {
+  width: 560px;
+  height: 160px;
+  top: 68%;
+  left: 20%;
+  background:
+    radial-gradient(ellipse 50% 70% at 20% 53%, rgba(255,255,255,0.90) 0%, transparent 68%),
+    radial-gradient(ellipse 52% 68% at 50% 43%, rgba(255,255,255,0.88) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 72% at 78% 55%, rgba(255,255,255,0.85) 0%, transparent 70%),
+    radial-gradient(ellipse 92% 30% at 50% 87%, rgba(220,236,255,0.65) 0%, transparent 100%);
+  filter: blur(8px);
+  opacity: 0.70;
+  animation: ctaCloudDrift3 28s ease-in-out infinite;
+}
+
+.cb-4 {
+  width: 480px;
+  height: 140px;
+  top: 25%;
+  left: 40%;
+  background:
+    radial-gradient(ellipse 52% 72% at 22% 54%, rgba(255,255,255,0.88) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 70% at 52% 44%, rgba(255,255,255,0.86) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 74% at 78% 56%, rgba(255,255,255,0.84) 0%, transparent 70%),
+    radial-gradient(ellipse 90% 28% at 50% 86%, rgba(215,230,255,0.60) 0%, transparent 100%);
+  filter: blur(10px);
+  opacity: 0.60;
+  animation: ctaCloudDrift4 44s ease-in-out infinite;
+}
+
+/* ── FRONT LAYER CLOUDS (faster parallax) ── */
+.cf-1 {
+  width: 620px;
+  height: 180px;
+  top: 5%;
+  left: 25%;
+  background:
+    radial-gradient(ellipse 54% 74% at 20% 56%, rgba(255,255,255,0.98) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 72% at 48% 46%, rgba(255,255,255,0.96) 0%, transparent 65%),
+    radial-gradient(ellipse 52% 76% at 76% 54%, rgba(255,255,255,0.94) 0%, transparent 70%),
+    radial-gradient(ellipse 96% 34% at 50% 89%, rgba(225,240,255,0.80) 0%, transparent 100%);
+  filter: blur(2px);
+  opacity: 0.95;
+  animation: ctaCloudDrift5 22s ease-in-out infinite;
+}
+
+.cf-2 {
+  width: 460px;
+  height: 140px;
+  top: 55%;
+  left: -3%;
+  background:
+    radial-gradient(ellipse 52% 72% at 22% 54%, rgba(255,255,255,0.95) 0%, transparent 68%),
+    radial-gradient(ellipse 50% 70% at 50% 44%, rgba(255,255,255,0.93) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 74% at 78% 56%, rgba(255,255,255,0.90) 0%, transparent 70%),
+    radial-gradient(ellipse 94% 30% at 50% 87%, rgba(220,238,255,0.75) 0%, transparent 100%);
+  filter: blur(3px);
+  opacity: 0.85;
+  animation: ctaCloudDrift6 26s ease-in-out infinite;
+}
+
+.cf-3 {
+  width: 380px;
+  height: 120px;
+  top: 78%;
+  right: 8%;
+  background:
+    radial-gradient(ellipse 50% 70% at 22% 54%, rgba(255,255,255,0.92) 0%, transparent 68%),
+    radial-gradient(ellipse 52% 68% at 52% 44%, rgba(255,255,255,0.90) 0%, transparent 65%),
+    radial-gradient(ellipse 48% 72% at 78% 56%, rgba(255,255,255,0.88) 0%, transparent 70%),
+    radial-gradient(ellipse 92% 28% at 50% 86%, rgba(215,234,255,0.70) 0%, transparent 100%);
+  filter: blur(4px);
+  opacity: 0.80;
+  animation: ctaCloudDrift7 30s ease-in-out infinite;
+}
+
+/* ── VIGNETTE OVERLAY (darkens edges slightly for depth) ── */
+.cta-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 50%,
+      transparent 40%,
+      rgba(200, 220, 255, 0.15) 100%
+    );
+  pointer-events: none;
+}
+
+/* ── CTA CONTENT (above clouds) ── */
+.cta-content {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── CTA CLOUD IDLE ANIMATIONS ── */
+@keyframes ctaCloudDrift1 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  28%      { transform: translate(35px, -22px) scale(1.04); }
+  55%      { transform: translate(-25px, 18px) scale(0.97); }
+  80%      { transform: translate(18px,  10px) scale(1.02); }
+}
+@keyframes ctaCloudDrift2 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  35%      { transform: translate(-40px, 28px) scale(1.03); }
+  68%      { transform: translate(30px, -20px) scale(0.96); }
+}
+@keyframes ctaCloudDrift3 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  20%      { transform: translate(22px, -30px) scale(1.05); }
+  60%      { transform: translate(-28px, 22px) scale(0.96); }
+  85%      { transform: translate(15px,  12px) scale(1.01); }
+}
+@keyframes ctaCloudDrift4 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  42%      { transform: translate(-32px, 20px) scale(1.03); }
+  72%      { transform: translate(25px, -15px) scale(0.97); }
+}
+@keyframes ctaCloudDrift5 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  30%      { transform: translate(28px, -18px) scale(1.05); }
+  65%      { transform: translate(-22px, 15px) scale(0.95); }
+}
+@keyframes ctaCloudDrift6 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  38%      { transform: translate(-30px, 22px) scale(1.04); }
+  70%      { transform: translate(25px, -18px) scale(0.96); }
+}
+@keyframes ctaCloudDrift7 {
+  0%,100% { transform: translate(0,    0)    scale(1.00); }
+  45%      { transform: translate(35px, -25px) scale(1.03); }
+  75%      { transform: translate(-20px, 18px) scale(0.97); }
 }
