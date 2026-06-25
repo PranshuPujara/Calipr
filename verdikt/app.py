@@ -1621,8 +1621,8 @@ if st.session_state.scored_candidates is not None:
                 f'</div>'
             )
         timeline_html += "</div>"
-        with st.expander("View Work History"):
-            st.markdown(timeline_html, unsafe_allow_html=True)
+        st.markdown('<div class="section-label" style="margin-top: 24px;">Work Experience</div>', unsafe_allow_html=True)
+        st.markdown(timeline_html, unsafe_allow_html=True)
         
         # Auto-fire Integrations
         st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
