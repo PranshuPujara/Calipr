@@ -1084,19 +1084,10 @@ def integrations_page():
 
   <!-- Header row -->
   <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
-    <!-- Slack logo SVG inline -->
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none"
-         xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#4A154B"/>
-      <path d="M11 18.5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm1.5-4.5H9a2 2 0 1 0 0 4h3.5V14z"
-            fill="#E01E5A"/>
-      <path d="M13.5 11a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-4.5 1.5v-3.5a2 2 0 1 0-4 0v3.5h4z"
-            fill="#36C5F0"/>
-      <path d="M21 13.5a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm-1.5 4.5H23a2 2 0 1 0 0-4h-3.5V18z"
-            fill="#2EB67D"/>
-      <path d="M18.5 21a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm4.5-1.5v3.5a2 2 0 1 0 4 0v-3.5h-4z"
-            fill="#ECB22E"/>
-    </svg>
+    <!-- Slack logo custom image inline -->
+    <div class="int-logo" style="display:flex; align-items:center; justify-content:center; padding:0; width:32px; height:32px; overflow:hidden; border-radius:6px;">
+      <img src="{get_image_base64('assets/icons/download.jpg')}" width="32" height="32" style="object-fit:cover;">
+    </div>
     <div>
       <div style="font-size:16px; font-weight:700; color:#0A0A0A;">Slack</div>
       <div style="font-size:12px; color:#6B7280;">
