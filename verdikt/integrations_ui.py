@@ -1086,7 +1086,7 @@ def integrations_page():
   <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
     <!-- Slack logo custom image inline -->
     <div class="int-logo" style="display:flex; align-items:center; justify-content:center; padding:0; width:32px; height:32px; overflow:hidden; border-radius:6px;">
-      <img src="{get_image_base64('assets/slack.jpg')}" width="32" height="32" style="object-fit:cover;">
+      <img src="{get_image_base64('assets/slack_logo.jpg')}" width="32" height="32" style="object-fit:cover;">
     </div>
     <div>
       <div style="font-size:16px; font-weight:700; color:#0A0A0A;">Slack</div>
