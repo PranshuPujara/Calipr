@@ -17,7 +17,7 @@ Calipr AI (powered by the Verdikt Offline Ranker) is a candidate discovery, scor
 
 ## Architecture Overview
 
-The scoring engine processes candidate pools using a multi-phase pipeline that filters, tokenizes, embeds, and scores profiles against target job specifications:
+The scoring engine processes candidate pools using a multi-phase pipeline that filters, tokenizes, embeds, and scores profiles against target job specifications, automatically synchronizing results to collaborative channels upon completion:
 
 ```
   [106K Candidate Profiles (JSONL)]
@@ -46,8 +46,40 @@ The scoring engine processes candidate pools using a multi-phase pipeline that f
   └──────────────┬──────────────┘
                  │
                  ▼
-          [Top 100 Shortlist]  (Outputs submission.csv)
+           [Top 100 Shortlist]
+                 │
+                 ├──► Generate submission.csv
+                 ├──► Auto-fire Slack notification (Top 5 Block Kit payload)
+                 └──► Auto-sync to Google Sheets (gspread authorizer)
 ```
+
+---
+
+## Core Features & Recruiter Capabilities
+
+The platform includes several core workflows engineered to streamline candidate evaluation and collaborative decision-making:
+
+### 1. Interactive Candidate Ranker
+*   **Dual-Tab Detail View:** Recruiters can toggle between **Evaluation & Insights** (Plotly radar charts, score breakdowns, and AI rationales) and the **Original Resume** view.
+*   **A4 Resume PDF Viewer:** Renders a browser-style PDF reader canvas. It features a grey toolbar with document titles (`Resume_[Name].pdf`), mock page counts, zoom controls, print/download icons, and a white, highly styled A4-formatted page displaying the candidate's actual profile, summary, experience timeline, education, and skills.
+*   **Quick-Action Buttons:** Recruiters can **Shortlist (✓)** or **Reject (✗)** candidates directly from their detail panel. 
+*   **Dynamic Sidebar Styling:** Sidebar candidate cards update instantly. Shortlisted candidates receive a green left-border and a checkmark (`✓`), while rejected candidates fade out (`opacity: 0.55`) and receive a cross (`✗`).
+
+### 2. Recruiter Memory & Active Calibration
+*   **Memory Feed:** Tracks learned hiring preferences and weight adjustments (e.g., skill assessment thresholds, notice period penalties).
+*   **Real-time Decision Counter:** Captures manual shortlist and reject clicks, incrementing the total candidate decisions metric in real time.
+*   **Active Confidence Engine:** Dynamically increases the **Memory Confidence** calibration rating by `+2%` for each manual action (up to a `+10%` boost), demonstrating active learning from recruiter feedback.
+*   **Bias Transparency Report:** Interactive Plotly bar chart displaying the magnitude of score adjustments to ensure override transparency.
+
+### 3. Analytics Dashboard
+*   **Score Distribution Histogram:** Displays score spreads of the overall candidate pool vs. the top 100 shortlisted candidates, confirming clear scoring separation.
+*   **Radial Cluster Web:** Plotly Scatterpolar chart showing candidate alignment across the five scoring dimensions.
+*   **Availability Pool:** Visualizes candidate readiness (active, passive, notice period spreads).
+
+### 4. Integrations Hub
+*   **Slack Webhook Integration:** Formats and delivers the top 5 candidates as a styled Slack Block Kit payload immediately upon ranking completion.
+*   **Google Sheets Exporter:** Dynamically writes candidate scores, metadata, and AI rationales to a configured spreadsheet using `gspread`. Includes an **Open Last Export** button linking directly to the live sheet, and a **Re-export** button to trigger manual syncs.
+*   **Twilio WhatsApp API:** Supports simulated SMS/WhatsApp routing using active Twilio REST API credentials.
 
 ---
 
@@ -111,12 +143,17 @@ Matches candidate industry backgrounds against target sectors (e.g., AI, SaaS, F
 ├── assets/                   # Static icons, SVGs, and images
 ├── data/                     # Offline database storage
 ├── integrations/
-│   └── api.py                # Simulated background FastAPI server
+│   ├── api.py                # Background FastAPI server
+│   ├── activity_log.py       # Logger for integration events
+│   ├── csv_export.py         # Formatted CSV exporter
+│   ├── sheets.py             # Google Sheets API writing engine
+│   └── slack.py              # Slack API notification trigger
 ├── pages/
 │   ├── analytics_page.py     # Analytics Tab layout and rendering logic
 │   └── recruiter_memory_page.py # Recruiter Memory Tab layout and rendering logic
 ├── app.py                    # Main dashboard entrypoint and Candidate Ranker layout
-├── integrations_ui.py        # Integrations Tab layout and simulated API log console
+├── integrations_ui.py        # Integrations Tab layout and active API log console
+├── slack_notifier.py         # Slack Block Kit message builder & sender
 ├── rank.py                   # Core mathematical scoring and filtering pipeline
 ├── precompute.py             # JD skill extraction script
 └── validate_submission.py    # Submission formatting validator
@@ -124,36 +161,26 @@ Matches candidate industry backgrounds against target sectors (e.g., AI, SaaS, F
 
 ---
 
-## Page-by-Page Component Guide
+## Secrets & Configuration
 
-### 1. Candidate Ranker (Home)
--   **Sidebar Controls**:
-    -   *Job Description Input*: Select between the default Hackathon JD, pasting a custom JD, or uploading a `.docx` file.
-    -   *Pipeline Weights Display*: Dynamically shows the weights applied to the 5 scoring signals (default or calibrated from recruiter memory).
-    -   *Rank Button*: Initiates the offline pipeline run on the dataset.
--   **Main Content**:
-    -   *KPI Metrics Row*: Real-time pipeline performance cards (Precision@5, Runtime, Candidates Evaluated, Scoring Signals).
-    -   *Ranked List*: Displays candidates sorted by suitability score. Clicking a candidate displays their detailed profile card, a custom Plotly radar chart of their signal breakdown, and their AI alignment rationale.
-    -   *Export Action*: Download button to export the top 100 shortlist as `submission.csv`.
+To enable the active integrations, configure the following secrets inside your `.streamlit/secrets.toml` file (for local runs) or Hugging Face Space secrets (for remote deployment):
 
-### 2. Recruiter Memory
--   **Memory Feed**: Dynamic stream showing calibrated hiring patterns (e.g., skill assessment score predictors, notice period penalties).
--   **Bias Transparency Report**: A custom Plotly bar chart showing the impact of penalization parameters (e.g., Career Gap Penalty, Notice Period Penalty, Response Rate Filter) to ensure ethical AI overrides.
--   **Hiring Decisions Changelog**: Interactive list showing previous calibration sessions, dates, decisions, and system confidence scores.
--   **Actions**:
-    -   *Export Memory*: Save the calibrated memory states as a JSON file.
-    -   *Reset Memory*: Deletes the run history, reverting the scoring weights to the default sandbox baseline.
+```toml
+# Slack Integration
+SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/..."
 
-### 3. Analytics Insights
--   **Core Engine KPIs**: Highlights NDCG@10 (`0.871`), Precision@5 (`94%`), and pipeline execution time (`28.4s`).
--   **Score Distribution Histogram**: Overlapping Plotly histogram displaying the score spreads of the overall candidate pool (gray) vs. the top 100 shortlisted candidates (blue), proving score separation.
--   **Radial Cluster (Radar)**: Interconnected Plotly Scatterpolar web diagram demonstrating candidate alignment across the five dimensions.
--   **Availability Breakdown**: Bar chart showing candidate readiness pools (Open to work, Active, Notice period spreads).
+# Google Sheets Integration
+GOOGLE_SHEETS_ID = "18M-F627QY7WI4tY..."
+GOOGLE_SERVICE_ACCOUNT = '{"type": "service_account", "project_id": "...", ...}'
 
-### 4. Integrations
--   **Simulated Connections**: Direct toggle switches to connect the sandbox to Slack, Google Sheets, and CRM endpoints.
--   **API Console**: Real-time log stream showing active background FastAPI server traffic (port `7861`), endpoint status, and simulated payloads.
--   **Clear Logs Action**: Instantly wipes the API console log history.
+# WhatsApp/SMS Integration
+TWILIO_SID = "AC..."
+TWILIO_AUTH = "..."
+TWILIO_PHONE = "+1..."
+
+# API Authorization
+CALIPR_API_KEY = "calipr_live_..."
+```
 
 ---
 
