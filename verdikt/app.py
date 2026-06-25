@@ -747,6 +747,7 @@ def render_radar(scores: dict, candidate_name: str) -> go.Figure:
     ))
 
     fig.update_layout(
+        margin=dict(l=60, r=60, t=60, b=60),
         polar=dict(
             bgcolor='rgba(0,0,0,0)',
             radialaxis=dict(
@@ -770,7 +771,6 @@ def render_radar(scores: dict, candidate_name: str) -> go.Figure:
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         showlegend=False,
-        margin=dict(l=40, r=40, t=40, b=40),
         font=dict(family='Inter, sans-serif', color='#1a1615'),
         height=340,
     )
@@ -778,12 +778,18 @@ def render_radar(scores: dict, candidate_name: str) -> go.Figure:
 
 # ── SCORE BAR COMPONENT ───────────────────────────────────────────
 def score_bar(label: str, value: float):
-    color_map = {
-        'high': '#0ea158',   # green
-        'mid':  '#cf8d13',   # amber
-        'low':  '#4A90FF',   # coral
-    }
-    fill_color = color_map['high'] if value >= 0.75 else color_map['mid'] if value >= 0.50 else color_map['low']
+    if "Semantic" in label:
+        fill_color = "#4A90FF"
+    elif "Skills" in label:
+        fill_color = "#00D4AA"
+    elif "Career" in label:
+        fill_color = "#7C6EFF"
+    elif "Behavioral" in label:
+        fill_color = "#F59E0B"
+    elif "Domain" in label:
+        fill_color = "#EF4444"
+    else:
+        fill_color = "#4A90FF" 
     st.markdown(f"""
     <div class="score-bar-container">
         <div class="score-bar-label">
@@ -1038,7 +1044,7 @@ def parse_resume_offline(text, filename="Resume"):
     title = "Software Engineer"
     titles = ["backend engineer", "frontend engineer", "fullstack engineer", "full stack engineer",
               "data scientist", "data engineer", "machine learning engineer", "devops engineer",
-              "software engineer", "product manager", "ui/ux designer"]
+              "software engineer", "product manager", "project manager", "ui/ux designer"]
     for t in titles:
         if t in text.lower():
             title = t.title()
@@ -1427,13 +1433,41 @@ with st.expander("📄 Add Custom Resumes to Evaluation Pool", expanded=False):
 # Section 6 — Conditional Results Display
 if st.session_state.scored_candidates is not None:
     st.markdown(f"""
-    <div style="background: rgba(14, 161, 88, 0.08); border: 1px solid rgba(14, 161, 88, 0.25); border-radius: 12px; color: #0c7540; padding: 15px; margin-bottom: 24px; font-weight:600; font-family:Inter,sans-serif;">
+    <div style="background: rgba(14, 161, 88, 0.08); border: 1px solid rgba(14, 161, 88, 0.25); border-radius: 12px; color: #0c7540; padding: 15px; margin-bottom: 12px; font-weight:600; font-family:Inter,sans-serif;">
         ✅ Ranking Complete — {st.session_state.run_runtime}s · Evaluated {st.session_state.total_candidates_evaluated:,} candidates
+    </div>
+    <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; color: #b45309; padding: 12px 15px; margin-bottom: 24px; font-weight:500; font-family:Inter,sans-serif; font-size: 13px;">
+        ⚠️ <strong>Note:</strong> Sample pool contains general candidates. Run with full 106K dataset for accurate ML engineer ranking.
     </div>
     """, unsafe_allow_html=True)
     
     scored_list = st.session_state.scored_candidates
     
+    if st.session_state.scored_candidates:
+        # Generate CSV for download
+        import pandas as pd
+        df = pd.DataFrame([{
+            'Rank': i+1,
+            'Candidate ID': c['candidate_id'],
+            'Name': c['name'],
+            'Title': c['title'],
+            'Final Score': c['score'],
+            'Semantic Fit': c['s1_sem'],
+            'Skills Match': c['s2_skl'],
+            'Career': c['s3_car'],
+            'Behavioral': c['s4_beh'],
+            'Domain': c['s5_dom']
+        } for i, c in enumerate(st.session_state.scored_candidates)])
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        
+        st.download_button(
+            label="Download Top 100 Shortlist CSV",
+            data=csv_data,
+            file_name="calipr_submission.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
     left_col, right_col = st.columns([1, 1.4])
     
     with left_col:
@@ -1529,7 +1563,7 @@ if st.session_state.scored_candidates is not None:
         st.markdown(skills_html, unsafe_allow_html=True)
         
         st.markdown('<div class="section-label">Work Experience Timeline</div>', unsafe_allow_html=True)
-        timeline_html = "<div style='position: relative; padding-left: 20px; border-left: 2px solid #e4e2e2; margin-top: 15px; margin-left: 10px;'>"
+        timeline_html = "<div style='position: relative; padding-left: 20px; border-left: 2px solid #e4e2e2; margin-top: 15px; margin-left: 10px; overflow: hidden; word-wrap: break-word; max-width: 100%;'>"
         for job in selected_cand['_profile'].get('career_history', []):
             is_current = job.get('is_current', False)
             bullet_color = "#156cc2" if is_current else "#757170"
@@ -1546,7 +1580,8 @@ if st.session_state.scored_candidates is not None:
                 f'</div>'
             )
         timeline_html += "</div>"
-        st.markdown(timeline_html, unsafe_allow_html=True)
+        with st.expander("View Work History"):
+            st.markdown(timeline_html, unsafe_allow_html=True)
         
         # Auto-fire Integrations
         st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
