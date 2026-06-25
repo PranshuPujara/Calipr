@@ -1206,7 +1206,7 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown('<div class="section-label">Job Description</div>', unsafe_allow_html=True)
-jd_input_method = st.sidebar.radio("Choose input method", ["Use Hackathon JD", "Paste custom JD", "Upload .docx"], label_visibility="collapsed")
+jd_input_method = st.sidebar.radio("Choose input method", ["Use Hackathon JD", "Paste custom JD", "Upload Document"], label_visibility="collapsed")
 
 jd_text = ""
 if jd_input_method == "Use Hackathon JD":
@@ -1225,14 +1225,26 @@ if jd_input_method == "Use Hackathon JD":
 elif jd_input_method == "Paste custom JD":
     jd_text = st.sidebar.text_area("Paste JD text here", height=200, placeholder="Enter job description text...")
 else:
-    uploaded_jd = st.sidebar.file_uploader("Upload job description .docx", type=["docx"], label_visibility="collapsed")
+    uploaded_jd = st.sidebar.file_uploader("Upload job description", type=["docx", "pdf", "txt"], label_visibility="collapsed")
     if uploaded_jd:
         try:
-            doc = Document(uploaded_jd)
-            jd_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
-            st.sidebar.success("DOCX parsed successfully.")
+            fname = uploaded_jd.name.lower()
+            if fname.endswith(".pdf"):
+                if PdfReader is None:
+                    st.sidebar.error("Error: pypdf library is not installed.")
+                else:
+                    reader = PdfReader(uploaded_jd)
+                    jd_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                    st.sidebar.success("PDF parsed successfully.")
+            elif fname.endswith(".txt"):
+                jd_text = uploaded_jd.read().decode("utf-8")
+                st.sidebar.success("TXT parsed successfully.")
+            else:
+                doc = Document(uploaded_jd)
+                jd_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+                st.sidebar.success("DOCX parsed successfully.")
         except Exception as e:
-            st.sidebar.error(f"Error parsing DOCX: {e}")
+            st.sidebar.error(f"Error parsing document: {e}")
 
 run_pipeline = st.sidebar.button("Rank Candidates", type="primary", use_container_width=True)
 
