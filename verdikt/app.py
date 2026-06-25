@@ -1851,8 +1851,8 @@ if st.session_state.scored_candidates is not None:
                 </div>
             </div>
             
-            <div style="background: #525659; padding: 25px 15px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; display: flex; justify-content: center; max-height: 750px; overflow-y: auto; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);">
-                <div style="background: #ffffff; width: 100%; max-width: 680px; padding: 45px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); color: #333333; font-family: 'Inter', Arial, sans-serif; text-align: left; border-radius: 2px;">
+            <div style="background: #525659; padding: 25px 15px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; max-height: 750px; overflow-y: auto; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);">
+                <div style="background: #ffffff; width: 100%; max-width: 680px; padding: 45px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); color: #333333; font-family: 'Inter', Arial, sans-serif; text-align: left; border-radius: 2px; margin: 0 auto;">
                     
                     <!-- Resume Header -->
                     <div style="border-bottom: 2px solid #156cc2; padding-bottom: 12px; margin-bottom: 20px;">
