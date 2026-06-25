@@ -1182,11 +1182,25 @@ def integrations_page():
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            sheets_open = st.button("Open Last Export", key="open_sheets", use_container_width=True)
+            from integrations.sheets import get_sheet_url, export_to_sheets
+            sheet_url = get_sheet_url()
+            if sheet_url:
+                st.link_button("Open Last Export ↗", sheet_url, use_container_width=True)
+            else:
+                st.button("Open Last Export ↗", disabled=True, use_container_width=True)
+                
             sheets_new  = st.button("Re-export Latest Rankings", key="reexport", use_container_width=True)
             if sheets_new:
-                st.success("✓ Data exported to Google Sheets.")
-                log_activity("Google Sheets", "📊", "Re-exported latest rankings manually.")
+                if "scored_candidates" in st.session_state and st.session_state.scored_candidates:
+                    job_title = st.session_state.get("job_title", "Senior AI Engineer")
+                    res = export_to_sheets(st.session_state.scored_candidates, job_title=job_title)
+                    if res.get("success"):
+                        st.success(f"✓ {res.get('message')}")
+                        log_activity("Google Sheets", "📊", f"Re-exported latest rankings manually to Google Sheets.")
+                    else:
+                        st.error(f"Failed to export: {res.get('message')}")
+                else:
+                    st.warning("⚠️ No ranked candidates found. Please run the Candidate Ranker first.")
 
     # 5. TIER 2 — AVAILABLE
     if current_filter in ["All", "Available"]:

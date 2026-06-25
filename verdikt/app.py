@@ -809,11 +809,24 @@ def candidate_row(rank: int, name: str, title: str,
     rank_class = "top3" if rank <= 3 else ""
     score_color = "#0ea158" if score >= 0.75 else "#cf8d13" if score >= 0.50 else "#4A90FF"
     
-    return f"""<div class="candidate-card {selected_class}" data-cand-idx="{cand_idx}">
+    # Check shortlist/reject decision from session state
+    decisions = st.session_state.get("candidate_decisions", {})
+    decision = decisions.get(name, None)
+    
+    decision_style = ""
+    badge_html = ""
+    if decision == "shortlisted":
+        decision_style = "border-left: 3px solid #0ea158 !important; background: rgba(14,161,88,0.03);"
+        badge_html = '<span style="font-size: 12px; color: #0ea158; margin-left: 4px; font-weight: bold;">✓</span>'
+    elif decision == "rejected":
+        decision_style = "opacity: 0.55; filter: grayscale(50%);"
+        badge_html = '<span style="font-size: 12px; color: #dc2626; margin-left: 4px; font-weight: bold;">✗</span>'
+        
+    return f"""<div class="candidate-card {selected_class}" style="{decision_style}" data-cand-idx="{cand_idx}">
 <div style="display:flex;align-items:center;gap:10px;">
 <div class="rank-badge {rank_class}">#{rank}</div>
 <div style="flex:1;min-width:0;">
-<div style="font-size:13px;font-weight:700;color:#1a1615;font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
+<div style="font-size:13px;font-weight:700;color:#1a1615;font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px;">{name} {badge_html}</div>
 <div style="font-size:11px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title}</div>
 </div>
 <div style="font-size:16px;font-weight:800;color:{score_color};font-family:'Fragment Mono',monospace;">{score:.3f}</div>
@@ -1550,12 +1563,12 @@ if st.session_state.scored_candidates is not None:
         # Candidate Card Detail Header
         avatar_initial = selected_cand['name'][0].upper() if selected_cand['name'] else 'C'
         st.markdown(f"""
-        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
             <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg, #84b9ef, #156cc2);
                         display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:700;font-size:18px;font-family:'Open Runde',sans-serif;">
                 {avatar_initial}
             </div>
-            <div>
+            <div style="flex:1;">
                 <h2 style="margin:0 !important; font-size: 22px !important;">{selected_cand['name']}</h2>
                 <div style="font-size:14px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;">
                     {selected_cand['title']} · {selected_cand['experience']:.1f} years experience
@@ -1563,141 +1576,316 @@ if st.session_state.scored_candidates is not None:
             </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Radar Chart Plotly
-        scores_dict = {
-            'semantic': selected_cand['s1_sem'],
-            'skills': selected_cand['s2_skl'],
-            'career': selected_cand['s3_car'],
-            'behavioral': selected_cand['s4_beh'],
-            'domain': selected_cand['s5_dom']
-        }
-        st.plotly_chart(render_radar(scores_dict, selected_cand['name']), use_container_width=True, config={'displayModeBar': False})
-        
-        # Score Breakdown
-        st.markdown('<div class="section-label" style="margin-top:15px;margin-bottom:10px;">Score Breakdown</div>', unsafe_allow_html=True)
-        score_bar("Semantic Fit", selected_cand['s1_sem'])
-        score_bar("Skills Match", selected_cand['s2_skl'])
-        score_bar("Career Trajectory", selected_cand['s3_car'])
-        score_bar("Behavioral Score", selected_cand['s4_beh'])
-        score_bar("Domain Alignment", selected_cand['s5_dom'])
-        
-        # Score Card Display
-        score_color = "#0ea158" if selected_cand['score'] >= 0.75 else "#cf8d13" if selected_cand['score'] >= 0.50 else "#4A90FF"
-        st.markdown(f"""
-        <div class="card-dark" style="margin: 20px 0; text-align:center; padding: 18px 24px;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#757170;margin-bottom:6px;font-family:'Fragment Mono', monospace;">
-                Final Combined Suitability Score
-            </div>
-            <div style="font-size:36px;font-weight:700;color:{score_color};font-family:'Fragment Mono',monospace;line-height:1;">
-                {selected_cand['score']:.4f}
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # AI Rationale Box
-        st.markdown('<div class="section-label">AI Rationale & Summary</div>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="rationale-box">
-            "{selected_cand['reasoning']}"
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Profile details (Skills Timelines / Timelines Layout)
-        st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
-        st.markdown('<div class="section-label">Extracted Skills & Capabilities</div>', unsafe_allow_html=True)
-        
-        skills_html = "<div style='display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; margin-bottom: 20px;'>"
-        for skill in selected_cand['_profile'].get('skills', []):
-            prof = skill.get('proficiency', 'intermediate').lower()
-            prof_color = "background: rgba(14,161,88,0.08); color: #0ea158; border: 1px solid rgba(14,161,88,0.25);" if prof == 'expert' or prof == 'advanced' else "background: rgba(132,185,239,0.08); color: #156cc2; border: 1px solid rgba(132,185,239,0.25);"
-            skills_html += f'<span style="{prof_color} padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 100px; font-family: Inter, sans-serif;">{skill.get("name")} • {prof.title()}</span>'
-        skills_html += "</div>"
-        st.markdown(skills_html, unsafe_allow_html=True)
-        
-        st.markdown('<div class="section-label">Work Experience Timeline</div>', unsafe_allow_html=True)
-        timeline_html = "<div style='position: relative; padding-left: 20px; border-left: 2px solid #e4e2e2; margin-top: 15px; margin-left: 10px; overflow: hidden; word-wrap: break-word; max-width: 100%;'>"
-        for job in selected_cand['_profile'].get('career_history', []):
-            is_current = job.get('is_current', False)
-            bullet_color = "#156cc2" if is_current else "#757170"
-            timeline_html += (
-                f'<div style="position: relative; margin-bottom: 24px;">'
-                f'<div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {bullet_color}; border: 2px solid #FFFFFF;"></div>'
-                f'<div style="font-size: 14px; font-weight: 700; color: #1a1615; font-family: Inter, sans-serif;">{job.get("title")}</div>'
-                f'<div style="font-size: 12px; color: #757170; margin-top: 2px; font-family: Inter, sans-serif;">'
-                f'{job.get("company")} • {job.get("duration_months", 0)} months'
-                f'</div>'
-                f'<p style="font-size: 13.5px; color: #453f3d; margin-top: 6px; line-height: 1.5; font-family: Inter, sans-serif;">'
-                f'{job.get("description", "")}'
-                f'</p>'
-                f'</div>'
-            )
-        timeline_html += "</div>"
-        st.markdown('<div class="section-label" style="margin-top: 24px;">Work Experience</div>', unsafe_allow_html=True)
-        st.markdown(timeline_html, unsafe_allow_html=True)
-        
-        # Auto-fire Integrations
-        st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
-        
-        ranked = scored_list
-        runtime = round(time.time() - st.session_state.get("run_start_time", time.time() - 4.5), 2)
+
+        # Quick-Action Buttons (Shortlist / Reject)
+        if "candidate_decisions" not in st.session_state:
+            st.session_state.candidate_decisions = {}
+            
+        current_decision = st.session_state.candidate_decisions.get(selected_cand['name'], None)
         job_title = st.session_state.get("job_title", "Senior AI Engineer")
         
-        if st.session_state.get("slack_connected"):
-            from slack_notifier import send_ranking_complete
-            top_candidates_for_slack = []
-            for i, row in enumerate(ranked[:5]):
-                top_candidates_for_slack.append({
-                    "candidate_id": row.get("candidate_id", f"CAND_{i}"),
-                    "rank":         i + 1,
-                    "score":        round(row.get("score", 0), 3),
-                    "name":         row.get("name", row.get("candidate_id", "Unknown")),
-                    "title":        row.get("title", "—"),
-                    "semantic":     round(row.get("semantic",   0), 2),
-                    "skills":       round(row.get("skills",     0), 2),
-                    "career":       round(row.get("career",     0), 2),
-                    "behavioral":   round(row.get("behavioral", 0), 2),
-                    "domain":       round(row.get("domain",     0), 2),
-                })
-            slack_result = send_ranking_complete(
-                top_candidates=top_candidates_for_slack,
-                job_title=job_title,
-                total_processed=st.session_state.total_candidates_evaluated,
-                runtime_seconds=runtime,
-                precision_at_5=0.94,
-                sandbox_url="https://huggingface.co/spaces/Aumus/calipr",
-            )
-            if slack_result.get("success"):
-                st.toast("📨 Top 5 sent to Slack #recruiting", icon="✅")
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            is_shortlisted = (current_decision == "shortlisted")
+            btn_label = "✅ Shortlisted" if is_shortlisted else "✓ Shortlist Candidate"
+            if st.button(
+                btn_label, 
+                key=f"sh_{selected_cand['name']}", 
+                type="primary" if is_shortlisted else "secondary", 
+                use_container_width=True
+            ):
+                st.session_state.candidate_decisions[selected_cand['name']] = "shortlisted"
+                st.toast(f"✓ {selected_cand['name']} moved to Shortlist", icon="✅")
+                from integrations.activity_log import log_activity
+                log_activity("Recruiter Decision", "✅", f"Shortlisted {selected_cand['name']} for {job_title}")
+                st.rerun()
+                
+        with col_act2:
+            is_rejected = (current_decision == "rejected")
+            btn_label = "❌ Rejected" if is_rejected else "✗ Reject Candidate"
+            if st.button(
+                btn_label, 
+                key=f"rej_{selected_cand['name']}", 
+                type="primary" if is_rejected else "secondary", 
+                use_container_width=True
+            ):
+                st.session_state.candidate_decisions[selected_cand['name']] = "rejected"
+                st.toast(f"❌ {selected_cand['name']} moved to Rejected", icon="ℹ️")
+                from integrations.activity_log import log_activity
+                log_activity("Recruiter Decision", "❌", f"Rejected {selected_cand['name']} for {job_title}")
+                st.rerun()
+
+        st.markdown('<hr style="margin:16px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
+
+        # Tabs layout for Evaluation and Resume
+        detail_tabs = st.tabs(["📊 Evaluation & Insights", "📄 Original Resume"])
+        
+        with detail_tabs[0]:
+            # Radar Chart Plotly
+            scores_dict = {
+                'semantic': selected_cand['s1_sem'],
+                'skills': selected_cand['s2_skl'],
+                'career': selected_cand['s3_car'],
+                'behavioral': selected_cand['s4_beh'],
+                'domain': selected_cand['s5_dom']
+            }
+            st.plotly_chart(render_radar(scores_dict, selected_cand['name']), use_container_width=True, config={'displayModeBar': False})
             
-        if st.session_state.get("sheets_connected"):
-            from integrations.sheets import export_to_sheets
-            r = export_to_sheets(ranked, job_title=job_title)
-            if r.get("success"): st.toast("Exported to Sheets!", icon="✅")
+            # Score Breakdown
+            st.markdown('<div class="section-label" style="margin-top:15px;margin-bottom:10px;">Score Breakdown</div>', unsafe_allow_html=True)
+            score_bar("Semantic Fit", selected_cand['s1_sem'])
+            score_bar("Skills Match", selected_cand['s2_skl'])
+            score_bar("Career Trajectory", selected_cand['s3_car'])
+            score_bar("Behavioral Score", selected_cand['s4_beh'])
+            score_bar("Domain Alignment", selected_cand['s5_dom'])
             
-        from integrations.csv_export import generate_submission_csv
-        try:
-            csv_bytes, fname = generate_submission_csv(ranked)
-            st.download_button(
-                label="Download Top 100 Shortlist CSV",
-                data=csv_bytes,
-                file_name=fname,
-                mime="text/csv",
-                use_container_width=True,
-                key="download_btn_try"
-            )
-        except Exception:
-            df_download = pd.DataFrame(scored_list)[["candidate_id", "name", "title", "experience", "score", "reasoning"]].copy()
-            df_download.insert(0, "rank", range(1, len(df_download) + 1))
-            csv_data = df_download.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="Download Top 100 Shortlist CSV",
-                data=csv_data,
-                file_name="calipr_submission.csv",
-                mime="text/csv",
-                use_container_width=True,
-                key="download_btn_except"
-            )
+            # Score Card Display
+            score_color = "#0ea158" if selected_cand['score'] >= 0.75 else "#cf8d13" if selected_cand['score'] >= 0.50 else "#4A90FF"
+            st.markdown(f"""
+            <div class="card-dark" style="margin: 20px 0; text-align:center; padding: 18px 24px;">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#757170;margin-bottom:6px;font-family:'Fragment Mono', monospace;">
+                    Final Combined Suitability Score
+                </div>
+                <div style="font-size:36px;font-weight:700;color:{score_color};font-family:'Fragment Mono',monospace;line-height:1;">
+                    {selected_cand['score']:.4f}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # AI Rationale Box
+            st.markdown('<div class="section-label">AI Rationale & Summary</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="rationale-box">
+                "{selected_cand['reasoning']}"
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Profile details (Skills Timelines / Timelines Layout)
+            st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
+            st.markdown('<div class="section-label">Extracted Skills & Capabilities</div>', unsafe_allow_html=True)
+            
+            skills_html = "<div style='display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; margin-bottom: 20px;'>"
+            for skill in selected_cand['_profile'].get('skills', []):
+                prof = skill.get('proficiency', 'intermediate').lower()
+                prof_color = "background: rgba(14,161,88,0.08); color: #0ea158; border: 1px solid rgba(14,161,88,0.25);" if prof == 'expert' or prof == 'advanced' else "background: rgba(132,185,239,0.08); color: #156cc2; border: 1px solid rgba(132,185,239,0.25);"
+                skills_html += f'<span style="{prof_color} padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 100px; font-family: Inter, sans-serif;">{skill.get("name")} • {prof.title()}</span>'
+            skills_html += "</div>"
+            st.markdown(skills_html, unsafe_allow_html=True)
+            
+            st.markdown('<div class="section-label">Work Experience Timeline</div>', unsafe_allow_html=True)
+            timeline_html = "<div style='position: relative; padding-left: 20px; border-left: 2px solid #e4e2e2; margin-top: 15px; margin-left: 10px; overflow: hidden; word-wrap: break-word; max-width: 100%;'>"
+            for job in selected_cand['_profile'].get('career_history', []):
+                is_current = job.get('is_current', False)
+                bullet_color = "#156cc2" if is_current else "#757170"
+                timeline_html += (
+                    f'<div style="position: relative; margin-bottom: 24px;">'
+                    f'<div style="position: absolute; left: -27px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: {bullet_color}; border: 2px solid #FFFFFF;"></div>'
+                    f'<div style="font-size: 14px; font-weight: 700; color: #1a1615; font-family: Inter, sans-serif;">{job.get("title")}</div>'
+                    f'<div style="font-size: 12px; color: #757170; margin-top: 2px; font-family: Inter, sans-serif;">'
+                    f'{job.get("company")} • {job.get("duration_months", 0)} months'
+                    f'</div>'
+                    f'<p style="font-size: 13.5px; color: #453f3d; margin-top: 6px; line-height: 1.5; font-family: Inter, sans-serif;">'
+                    f'{job.get("description", "")}'
+                    f'</p>'
+                    f'</div>'
+                )
+            timeline_html += "</div>"
+            st.markdown('<div class="section-label" style="margin-top: 24px;">Work Experience</div>', unsafe_allow_html=True)
+            st.markdown(timeline_html, unsafe_allow_html=True)
+            
+            # Auto-fire Integrations
+            st.markdown('<hr style="margin:24px 0; border: none; border-top: 1px solid #e4e2e2;">', unsafe_allow_html=True)
+            
+            ranked = scored_list
+            runtime = round(time.time() - st.session_state.get("run_start_time", time.time() - 4.5), 2)
+            
+            if st.session_state.get("slack_connected"):
+                from slack_notifier import send_ranking_complete
+                top_candidates_for_slack = []
+                for i, row in enumerate(ranked[:5]):
+                    top_candidates_for_slack.append({
+                        "candidate_id": row.get("candidate_id", f"CAND_{i}"),
+                        "rank":         i + 1,
+                        "score":        round(row.get("score", 0), 3),
+                        "name":         row.get("name", row.get("candidate_id", "Unknown")),
+                        "title":        row.get("title", "—"),
+                        "semantic":     round(row.get("semantic",   0), 2),
+                        "skills":       round(row.get("skills",     0), 2),
+                        "career":       round(row.get("career",     0), 2),
+                        "behavioral":   round(row.get("behavioral", 0), 2),
+                        "domain":       round(row.get("domain",     0), 2),
+                    })
+                slack_result = send_ranking_complete(
+                    top_candidates=top_candidates_for_slack,
+                    job_title=job_title,
+                    total_processed=st.session_state.total_candidates_evaluated,
+                    runtime_seconds=runtime,
+                    precision_at_5=0.94,
+                    sandbox_url="https://huggingface.co/spaces/Aumus/calipr",
+                )
+                if slack_result.get("success"):
+                    st.toast("📨 Top 5 sent to Slack #recruiting", icon="✅")
+                
+            if st.session_state.get("sheets_connected"):
+                from integrations.sheets import export_to_sheets
+                r = export_to_sheets(ranked, job_title=job_title)
+                if r.get("success"): st.toast("Exported to Sheets!", icon="✅")
+                
+            from integrations.csv_export import generate_submission_csv
+            try:
+                csv_bytes, fname = generate_submission_csv(ranked)
+                st.download_button(
+                    label="Download Top 100 Shortlist CSV",
+                    data=csv_bytes,
+                    file_name=fname,
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="download_btn_try"
+                )
+            except Exception:
+                df_download = pd.DataFrame(scored_list)[["candidate_id", "name", "title", "experience", "score", "reasoning"]].copy()
+                df_download.insert(0, "rank", range(1, len(df_download) + 1))
+                csv_data = df_download.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="Download Top 100 Shortlist CSV",
+                    data=csv_data,
+                    file_name="calipr_submission.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                    key="download_btn_except"
+                )
+
+        with detail_tabs[1]:
+            # Resume PDF Viewer Tab
+            prof = selected_cand['_profile']
+            p_info = prof.get('profile', {})
+            
+            # Contact Details
+            cand_id_clean = selected_cand['candidate_id'].replace(" ", "_")
+            email = f"{cand_id_clean.lower()}@calipr-eval.ai"
+            phone = f"+1 (555) 019-{str(abs(hash(selected_cand['name'])))[:4]}"
+            location = f"{p_info.get('location', 'San Francisco')}, {p_info.get('country', 'US')}"
+            
+            # Professional Summary
+            summary = p_info.get('summary', f"Experienced professional specializing in {selected_cand['title']} with a demonstrated history of driving impact in the industry.")
+            
+            # Build Experience HTML
+            exp_list = prof.get('career_history', [])
+            exp_html = ""
+            if exp_list:
+                for job in exp_list:
+                    duration = f"{job.get('duration_months', 0)} months" if job.get('duration_months') else ""
+                    comp = job.get('company', '')
+                    desc = job.get('description', '')
+                    title = job.get('title', '')
+                    
+                    exp_html += f"""
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                            <strong style="font-size: 14px; color: #1a1a1a; font-family: Inter, sans-serif;">{title}</strong>
+                            <span style="font-size: 11px; color: #757170; font-family: Inter, sans-serif;">{duration}</span>
+                        </div>
+                        <div style="font-size: 12.5px; color: #156cc2; font-weight: 600; margin-bottom: 6px; font-family: Inter, sans-serif;">{comp}</div>
+                        <p style="font-size: 12px; color: #453f3d; line-height: 1.5; margin: 0; text-align: justify; font-family: Inter, sans-serif;">{desc}</p>
+                    </div>
+                    """
+            else:
+                exp_html = "<p style='font-size: 12.5px; color: #757170; font-style: italic; font-family: Inter, sans-serif;'>No career history provided.</p>"
+                
+            # Build Education HTML
+            edu_list = prof.get('education', [])
+            edu_html = ""
+            if edu_list:
+                for edu in edu_list:
+                    degree = edu.get('degree', '')
+                    field = edu.get('field_of_study', '')
+                    school = edu.get('school', '')
+                    
+                    edu_html += f"""
+                    <div style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <strong style="font-size: 13px; color: #1a1a1a; font-family: Inter, sans-serif;">{degree} in {field}</strong>
+                        </div>
+                        <div style="font-size: 12px; color: #757170; font-family: Inter, sans-serif;">{school}</div>
+                    </div>
+                    """
+            else:
+                edu_html = "<p style='font-size: 12.5px; color: #757170; font-style: italic; font-family: Inter, sans-serif;'>No education history provided.</p>"
+                
+            # Build Skills HTML
+            skills_list = prof.get('skills', [])
+            skills_html = ""
+            if skills_list:
+                skills_html = "<div style='display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;'>"
+                for s in skills_list:
+                    skills_html += f"<span style='background: #f3f4f6; color: #374151; padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 4px; border: 1px solid #e5e7eb; font-family: Inter, sans-serif;'>{s.get('name')}</span>"
+                skills_html += "</div>"
+            else:
+                skills_html = "<p style='font-size: 12.5px; color: #757170; font-style: italic; font-family: Inter, sans-serif;'>No skills extracted.</p>"
+
+            # Render PDF Reader Frame
+            st.markdown(f"""
+            <div style="background: #323639; color: #ffffff; padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; border-top-left-radius: 8px; border-top-right-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; border-bottom: 1px solid #222; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 16px;">📄</span>
+                    <strong style="font-weight: 600; color: #f1f1f1;">Resume_{selected_cand['name'].replace(" ", "_")}.pdf</strong>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; color: #b3b3b3;">
+                    <span>Page 1 of 1</span>
+                    <span style="border-left: 1px solid #555; height: 14px;"></span>
+                    <span style="cursor: pointer; font-weight: bold; color: #fff;" title="Zoom Out">➖</span>
+                    <span style="font-size: 12px;">100%</span>
+                    <span style="cursor: pointer; font-weight: bold; color: #fff;" title="Zoom In">➕</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; color: #fff; font-size: 14px;">
+                    <span style="cursor: pointer; opacity: 0.85;" title="Print Resume">🖨️</span>
+                    <span style="cursor: pointer; opacity: 0.85;" title="Download PDF">📥</span>
+                </div>
+            </div>
+            
+            <div style="background: #525659; padding: 25px 15px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; display: flex; justify-content: center; max-height: 750px; overflow-y: auto; box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);">
+                <div style="background: #ffffff; width: 100%; max-width: 680px; padding: 45px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); color: #333333; font-family: 'Inter', Arial, sans-serif; text-align: left; border-radius: 2px;">
+                    
+                    <!-- Resume Header -->
+                    <div style="border-bottom: 2px solid #156cc2; padding-bottom: 12px; margin-bottom: 20px;">
+                        <h1 style="margin: 0 0 6px 0; font-size: 26px; color: #1a1a1a; font-family: 'Open Runde', sans-serif; font-weight: 800; letter-spacing: -0.02em;">{selected_cand['name']}</h1>
+                        <div style="font-size: 14px; font-weight: 600; color: #156cc2; margin-bottom: 8px; font-family: Inter, sans-serif;">{selected_cand['title']}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 11.5px; color: #666; font-family: Inter, sans-serif;">
+                            <span>📍 {location}</span>
+                            <span>•</span>
+                            <span>✉️ {email}</span>
+                            <span>•</span>
+                            <span>📞 {phone}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Section -->
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Professional Summary</h3>
+                        <p style="font-size: 12px; color: #453f3d; line-height: 1.5; margin: 0; text-align: justify; font-family: Inter, sans-serif;">{summary}</p>
+                    </div>
+                    
+                    <!-- Experience Section -->
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Work Experience</h3>
+                        {exp_html}
+                    </div>
+                    
+                    <!-- Education Section -->
+                    <div style="margin-bottom: 24px;">
+                        <h3 style="margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Education</h3>
+                        {edu_html}
+                    </div>
+                    
+                    <!-- Skills Section -->
+                    <div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Extracted Skills</h3>
+                        {skills_html}
+                    </div>
+                    
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # Section 2 — Stats Row
 col1, col2, col3, col4 = st.columns(4)

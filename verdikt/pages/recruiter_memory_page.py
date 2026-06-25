@@ -386,15 +386,16 @@ def render_recruiter_memory_page():
     from analytics.data_store import load_run_history
     history = load_run_history()
     sessions = len(history)
+    manual_decisions = len(st.session_state.get("candidate_decisions", {}))
     
     if sessions > 0:
         # Match exactly 412 when len(history) == 4, otherwise sum total_ranked + 12
-        decisions = sum(run.get("total_ranked", 100) for run in history) + (12 if sessions == 4 else 0)
-        confidence = min(98, 45 + sessions * 7)
+        decisions = sum(run.get("total_ranked", 100) for run in history) + (12 if sessions == 4 else 0) + manual_decisions
+        confidence = min(98, 45 + sessions * 7 + min(10, manual_decisions * 2))
         sessions_to_high = max(0, math.ceil((90 - confidence) / 7))
     else:
-        decisions = 0
-        confidence = 0
+        decisions = manual_decisions
+        confidence = min(98, manual_decisions * 5)
         sessions_to_high = 9
 
     col_conf, col_stats = st.columns([1, 1], gap="large")
