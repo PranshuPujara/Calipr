@@ -803,21 +803,16 @@ def candidate_row(rank: int, name: str, title: str,
     rank_class = "top3" if rank <= 3 else ""
     score_color = "#0ea158" if score >= 0.75 else "#cf8d13" if score >= 0.50 else "#4A90FF"
     
-    return f"""
-    <div class="candidate-card {selected_class}">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <div class="rank-badge {rank_class}">#{rank}</div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:14px;font-weight:700;color:#1a1615;
-                            font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
-                <div style="font-size:12px;color:#757170;font-family:Inter,sans-serif;
-                            margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title} · {years:.1f} yrs</div>
-            </div>
-            <div style="font-size:18px;font-weight:800;color:{score_color};
-                        font-family:'Fragment Mono',monospace;">{score:.3f}</div>
-        </div>
-    </div>
-    """
+    return f"""<div class="candidate-card {selected_class}">
+<div style="display:flex;align-items:center;gap:12px;">
+<div class="rank-badge {rank_class}">#{rank}</div>
+<div style="flex:1;min-width:0;">
+<div style="font-size:14px;font-weight:700;color:#1a1615;font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
+<div style="font-size:12px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title} · {years:.1f} yrs</div>
+</div>
+<div style="font-size:18px;font-weight:800;color:{score_color};font-family:'Fragment Mono',monospace;">{score:.3f}</div>
+</div>
+</div>"""
 
 def signal_card(icon: str, name: str, weight: str, description: str):
     icon_html = f'<div style="font-size:28px;">{icon}</div>' if icon else ''
