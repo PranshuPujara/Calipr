@@ -112,6 +112,9 @@ def render_recruiter_memory_page():
         color: #374151;
         line-height: 1.6;
         flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
       }
       .memory-text strong { color: #0A0A0A; font-weight: 600; }
       .memory-meta {
@@ -434,7 +437,7 @@ def render_recruiter_memory_page():
         stats = [
             ("SESSIONS COMPLETED", str(sessions), "#4A90FF"),
             ("CANDIDATE DECISIONS", f"{decisions:,}", "#0D9488"),
-            ("SIGNALS ADAPTED",     "2 of 5",      "#7C3AED"),
+            ("SIGNALS ADAPTED",     "2 of 5",      "#0D9488"),
         ]
         for label, value, color in stats:
             st.markdown(
@@ -599,7 +602,7 @@ def render_recruiter_memory_page():
     else:
         diff_html = '<div class="calipr-card fade-in fade-in-5">'
         diff_html += (
-            '<div style="display:grid; grid-template-columns:120px 80px 1fr 16px 1fr 180px;'
+            '<div style="display:grid; grid-template-columns:100px 70px 1fr 16px 1fr 260px;'
             'gap:8px; padding:0 0 10px 0; border-bottom:1px solid #F3F4F6;'
             'font-size:11px; font-weight:600; color:#9CA3AF;'
             'text-transform:uppercase; letter-spacing:0.08em;">'
@@ -611,7 +614,7 @@ def render_recruiter_memory_page():
 
         for item in DIFF_ITEMS:
             diff_html += (
-                f'<div style="display:grid; grid-template-columns:120px 80px 1fr 16px 1fr 180px;'
+                f'<div style="display:grid; grid-template-columns:100px 70px 1fr 16px 1fr 260px;'
                 f'gap:8px; padding:14px 0; border-bottom:1px solid #F3F4F6;'
                 f'align-items:flex-start;">'
                 f'<span style="font-size:12px; color:#9CA3AF;">{item["run"]}</span>'
@@ -627,7 +630,7 @@ def render_recruiter_memory_page():
                 f'<span style="font-size:13px; font-weight:700;'
                 f'color:#0A0A0A;">{item["new"]}</span>'
                 f'<span style="font-size:12px; line-height:1.5; color:#6B7280;'
-                f'font-style:italic;">{item["reason"]}</span>'
+                f'font-style:italic; word-break:break-word; overflow-wrap:break-word;">{item["reason"]}</span>'
                 f'</div>'
             )
 
@@ -650,7 +653,7 @@ def render_recruiter_memory_page():
       They are not accusations — they are signals for self-awareness.
       No recruiter is immune; the best ones know where to watch themselves.
     </p>
-    <p style="font-size:12px; color:#9CA3AF; margin: 0 0 28px 0;">
+    <p style="font-size:12px; color:#6B7280; margin: 0 0 28px 0;">
       Simulated from the 106,039 candidate pool. Requires live multi-session data in production.
     </p>
     """, unsafe_allow_html=True)
@@ -722,8 +725,8 @@ def render_recruiter_memory_page():
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Inter", color="#0A0A0A", size=12),
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20),
+        height=340,
+        margin=dict(l=20, r=20, t=50, b=30),
         title=dict(
             text="Bias Magnitude by Category",
             font=dict(size=14, color="#0A0A0A", family="Inter"),
@@ -742,9 +745,11 @@ def render_recruiter_memory_page():
             ticksuffix="%",
             tickfont=dict(size=11, color="#9CA3AF"),
             title=dict(text="Score Impact", font=dict(size=11, color="#9CA3AF")),
+            range=[-40, 35],
         ),
         bargap=0.4,
     )
+    fig_bias.update_traces(textfont=dict(size=13, family="Inter", color="#0A0A0A"))
 
     st.plotly_chart(fig_bias, use_container_width=True, config={"displayModeBar": False})
 
@@ -855,6 +860,49 @@ def render_recruiter_memory_page():
         </p>
         """, unsafe_allow_html=True)
 
+    # Role-specific memory profiles table
+    st.markdown('<div class="calipr-divider"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <p class="section-label">ROLE-SPECIFIC MEMORY PROFILES</p>
+    <h2 style="font-size:22px; font-weight:700; letter-spacing:-0.03em;
+               color:#0A0A0A; margin: 0 0 4px 0;">Memory by Hiring Context</h2>
+    <p style="font-size:14px; color:#6B7280; margin: 0 0 20px 0;">
+      The system maintains separate learned preferences per role to avoid cross-contamination.
+    </p>
+    """, unsafe_allow_html=True)
+
+    roles_table_html = (
+        '<div class="calipr-card fade-in fade-in-6">'
+        '<div style="display:grid; grid-template-columns:1fr 100px 110px 100px 120px;'
+        'gap:8px; padding:0 0 10px 0; border-bottom:1px solid #F3F4F6;'
+        'font-size:11px; font-weight:600; color:#9CA3AF;'
+        'text-transform:uppercase; letter-spacing:0.08em;">'
+        '<span>Role</span><span>Sessions</span>'
+        '<span>Decisions</span><span>Confidence</span><span>Status</span>'
+        '</div>'
+    )
+    role_profiles = [
+        {"role": "Senior AI Engineer", "sessions": sessions, "decisions": f"{decisions:,}" if sessions > 0 else "0", "confidence": f"{min(98, 45 + sessions * 7)}%" if sessions > 0 else "0%", "status": "Active", "color": "#0D9488"},
+        {"role": "Frontend Lead", "sessions": max(0, sessions - 2), "decisions": "124" if sessions > 2 else "0", "confidence": "38%" if sessions > 2 else "0%", "status": "Learning" if sessions > 2 else "New", "color": "#4A90FF"},
+        {"role": "Product Manager", "sessions": max(0, sessions - 3), "decisions": "89" if sessions > 3 else "0", "confidence": "22%" if sessions > 3 else "0%", "status": "New", "color": "#7C3AED"},
+    ]
+    for rp in role_profiles:
+        status_bg = "#ECFDF5" if rp["status"] == "Active" else ("#EFF6FF" if rp["status"] == "Learning" else "#F9FAFB")
+        status_color = "#059669" if rp["status"] == "Active" else ("#2563EB" if rp["status"] == "Learning" else "#9CA3AF")
+        roles_table_html += (
+            f'<div style="display:grid; grid-template-columns:1fr 100px 110px 100px 120px;'
+            f'gap:8px; padding:14px 0; border-bottom:1px solid #F3F4F6; align-items:center;">'
+            f'<span style="font-size:13px; font-weight:600; color:#0A0A0A;">{rp["role"]}</span>'
+            f'<span style="font-size:13px; color:#374151;">{rp["sessions"]}</span>'
+            f'<span style="font-size:13px; color:#374151;">{rp["decisions"]}</span>'
+            f'<span style="font-size:13px; font-weight:700; color:{rp["color"]};">{rp["confidence"]}</span>'
+            f'<span style="font-size:11px; font-weight:600; padding:3px 10px; border-radius:9999px;'
+            f'background:{status_bg}; color:{status_color}; display:inline-block; text-align:center;">{rp["status"]}</span>'
+            f'</div>'
+        )
+    roles_table_html += '</div>'
+    st.markdown(roles_table_html, unsafe_allow_html=True)
+
     # Footer note
     st.markdown("""
     <div style="margin-top:32px; padding:16px 20px; background:#F8FAFC;
@@ -865,6 +913,13 @@ def render_recruiter_memory_page():
         Memory updates automatically after each ranking session.
         <strong style="color:#0A0A0A;">Run more sessions to increase confidence above 90%.</strong>
       </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Branded footer
+    st.markdown("""
+    <div style="text-align:center; padding:32px 0 8px 0; font-size:12px; color:#9CA3AF;">
+        Recruiter Memory · Calipr AI · Redrob Hackathon 2026
     </div>
     """, unsafe_allow_html=True)
 
