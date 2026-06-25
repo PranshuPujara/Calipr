@@ -513,7 +513,7 @@ div[data-baseweb="select"] > div {
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(228, 226, 226, 0.8) !important;
     border-radius: 16px !important;
-    padding: 16px 20px !important;
+    padding: 12px 14px !important;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
     margin-bottom: 10px !important;
@@ -810,13 +810,13 @@ def candidate_row(rank: int, name: str, title: str,
     score_color = "#0ea158" if score >= 0.75 else "#cf8d13" if score >= 0.50 else "#4A90FF"
     
     return f"""<div class="candidate-card {selected_class}" data-cand-idx="{cand_idx}">
-<div style="display:flex;align-items:center;gap:12px;">
+<div style="display:flex;align-items:center;gap:10px;">
 <div class="rank-badge {rank_class}">#{rank}</div>
 <div style="flex:1;min-width:0;">
-<div style="font-size:14px;font-weight:700;color:#1a1615;font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
-<div style="font-size:12px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title} · {years:.1f} yrs</div>
+<div style="font-size:13px;font-weight:700;color:#1a1615;font-family:Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{name}</div>
+<div style="font-size:11px;color:#757170;font-family:Inter,sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{title}</div>
 </div>
-<div style="font-size:18px;font-weight:800;color:{score_color};font-family:'Fragment Mono',monospace;">{score:.3f}</div>
+<div style="font-size:16px;font-weight:800;color:{score_color};font-family:'Fragment Mono',monospace;">{score:.3f}</div>
 </div>
 </div>"""
 
@@ -1469,10 +1469,9 @@ if st.session_state.scored_candidates is not None:
             key="download_btn_top"
         )
 
-    left_col, right_col = st.columns([1, 1.4])
-    
-    with left_col:
-        st.markdown('<div class="section-label">Ranked Candidates</div>', unsafe_allow_html=True)
+    with st.sidebar:
+        st.markdown('<hr style="margin:20px 0 16px;border-top:1px solid #e4e2e2;">', unsafe_allow_html=True)
+        st.markdown('<div class="section-label" style="margin-bottom: 12px;">Ranked Candidates</div>', unsafe_allow_html=True)
         
         # Hidden Radio for Click Tunneling
         st.markdown('<div id="hide_next_radio"></div>', unsafe_allow_html=True)
@@ -1533,7 +1532,7 @@ if st.session_state.scored_candidates is not None:
         """
         components.html(js_code, height=0, width=0)
         
-    with right_col:
+    with st.container():
         st.markdown('<div class="section-label">Candidate Detail View</div>', unsafe_allow_html=True)
         
         # Candidate Card Detail Header
