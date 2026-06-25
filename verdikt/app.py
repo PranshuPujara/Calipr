@@ -1769,6 +1769,10 @@ if st.session_state.scored_candidates is not None:
             # Professional Summary
             summary = p_info.get('summary', f"Experienced professional specializing in {selected_cand['title']} with a demonstrated history of driving impact in the industry.")
             
+            # Helper to strip all leading/trailing whitespace from each line of HTML
+            def clean_html(html_str):
+                return "\n".join([line.strip() for line in html_str.split("\n") if line.strip()])
+            
             # Build Experience HTML
             exp_list = prof.get('career_history', [])
             exp_html = ""
@@ -1816,15 +1820,19 @@ if st.session_state.scored_candidates is not None:
             skills_list = prof.get('skills', [])
             skills_html = ""
             if skills_list:
-                skills_html = "<div style='display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;'>"
+                skills_html = "<div style='display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;'>\n"
                 for s in skills_list:
-                    skills_html += f"<span style='background: #f3f4f6; color: #374151; padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 4px; border: 1px solid #e5e7eb; font-family: Inter, sans-serif;'>{s.get('name')}</span>"
+                    skills_html += f"<span style='background: #f3f4f6; color: #374151; padding: 3px 8px; font-size: 11px; font-weight: 500; border-radius: 4px; border: 1px solid #e5e7eb; font-family: Inter, sans-serif;'>{s.get('name')}</span>\n"
                 skills_html += "</div>"
             else:
                 skills_html = "<p style='font-size: 12.5px; color: #757170; font-style: italic; font-family: Inter, sans-serif;'>No skills extracted.</p>"
 
+            exp_html_clean = clean_html(exp_html)
+            edu_html_clean = clean_html(edu_html)
+            skills_html_clean = clean_html(skills_html)
+
             # Render PDF Reader Frame
-            st.markdown(f"""
+            pdf_viewer_html = f"""
             <div style="background: #323639; color: #ffffff; padding: 10px 18px; display: flex; align-items: center; justify-content: space-between; border-top-left-radius: 8px; border-top-right-radius: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; border-bottom: 1px solid #222; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span style="font-size: 16px;">📄</span>
@@ -1868,24 +1876,25 @@ if st.session_state.scored_candidates is not None:
                     <!-- Experience Section -->
                     <div style="margin-bottom: 24px;">
                         <h3 style="margin: 0 0 12px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Work Experience</h3>
-                        {exp_html}
+                        {exp_html_clean}
                     </div>
                     
                     <!-- Education Section -->
                     <div style="margin-bottom: 24px;">
                         <h3 style="margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Education</h3>
-                        {edu_html}
+                        {edu_html_clean}
                     </div>
                     
                     <!-- Skills Section -->
                     <div>
                         <h3 style="margin: 0 0 8px 0; font-size: 13px; text-transform: uppercase; color: #1a1a1a; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; font-weight: 700; font-family: Inter, sans-serif;">Extracted Skills</h3>
-                        {skills_html}
+                        {skills_html_clean}
                     </div>
                     
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """
+            st.markdown(clean_html(pdf_viewer_html), unsafe_allow_html=True)
 
 # Section 2 — Stats Row
 col1, col2, col3, col4 = st.columns(4)
