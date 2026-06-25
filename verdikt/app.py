@@ -1150,7 +1150,30 @@ st.markdown("""
     font-weight: 600;
     border-bottom: 2px solid #1a1615;
 }
+.hackathon-banner {
+    background: linear-gradient(90deg, #156cc2 0%, #4f46e5 100%);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(21, 108, 194, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+}
+.hackathon-banner strong {
+    font-weight: 700;
+}
 </style>
+<div class="hackathon-banner">
+  <span>🏆 <strong>Hackathon Demo Mode</strong> — All Pro features unlocked. Sponsored by <strong>Redrob AI</strong>.</span>
+</div>
 <div class="dashboard-nav">
   <div class="nav-logo">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #1a1615;">
