@@ -804,12 +804,12 @@ def score_bar(label: str, value: float):
 
 # ── CANDIDATE ROW COMPONENT ───────────────────────────────────────
 def candidate_row(rank: int, name: str, title: str, 
-                  years: float, score: float, is_selected: bool = False):
+                  years: float, score: float, is_selected: bool = False, cand_idx: int = 0):
     selected_class = "selected" if is_selected else ""
     rank_class = "top3" if rank <= 3 else ""
     score_color = "#0ea158" if score >= 0.75 else "#cf8d13" if score >= 0.50 else "#4A90FF"
     
-    return f"""<div class="candidate-card {selected_class}">
+    return f"""<div class="candidate-card {selected_class}" data-cand-idx="{cand_idx}">
 <div style="display:flex;align-items:center;gap:12px;">
 <div class="rank-badge {rank_class}">#{rank}</div>
 <div style="flex:1;min-width:0;">
@@ -1474,13 +1474,19 @@ if st.session_state.scored_candidates is not None:
     with left_col:
         st.markdown('<div class="section-label">Ranked Candidates</div>', unsafe_allow_html=True)
         
-        # Interactive Selectbox
-        selected_idx = st.selectbox(
+        # Hidden Radio for Click Tunneling
+        st.markdown('<div id="hide_next_radio"></div>', unsafe_allow_html=True)
+        selected_idx = st.radio(
             "Select Candidate to Inspect",
             options=range(len(scored_list)),
-            format_func=lambda i: f"#{i+1} - {scored_list[i]['name']} ({scored_list[i]['score']:.3f})",
+            format_func=lambda i: f"#{i+1} - {scored_list[i]['name']}",
             label_visibility="collapsed"
         )
+        st.markdown("""<style>
+        .element-container:has(#hide_next_radio) + .element-container {
+            display: none !important;
+        }
+        </style>""", unsafe_allow_html=True)
         
         selected_cand = scored_list[selected_idx]
         
@@ -1488,9 +1494,44 @@ if st.session_state.scored_candidates is not None:
         cards_html = "<div style='max-height: 650px; overflow-y: auto; padding-right: 5px; margin-top: 10px;'>"
         for rank, row in enumerate(scored_list[:30], 1):  # Display top 30
             is_sel = (rank - 1 == selected_idx)
-            cards_html += candidate_row(rank, row["name"], row["title"], row["experience"], row["score"], is_selected=is_sel)
+            cards_html += candidate_row(rank, row["name"], row["title"], row["experience"], row["score"], is_selected=is_sel, cand_idx=rank-1)
         cards_html += "</div>"
         st.markdown(cards_html, unsafe_allow_html=True)
+        
+        import streamlit.components.v1 as components
+        js_code = """
+        <script>
+        const checkExist = setInterval(function() {
+            const doc = window.parent.document;
+            const marker = doc.querySelector('#hide_next_radio');
+            const cards = doc.querySelectorAll('.candidate-card');
+            
+            if (marker && cards.length > 0) {
+                clearInterval(checkExist);
+                
+                const radioContainer = marker.closest('.element-container').nextElementSibling;
+                if (!radioContainer) return;
+                
+                const radios = radioContainer.querySelectorAll('input[type="radio"]');
+                
+                cards.forEach(card => {
+                    // Prevent duplicate bindings
+                    if (card.getAttribute('data-bound')) return;
+                    card.setAttribute('data-bound', 'true');
+                    
+                    card.onclick = function() {
+                        const idx = parseInt(this.getAttribute('data-cand-idx'));
+                        if (radios.length > idx) {
+                            radios[idx].click();
+                        }
+                    };
+                });
+            }
+        }, 300);
+        setTimeout(() => clearInterval(checkExist), 10000);
+        </script>
+        """
+        components.html(js_code, height=0, width=0)
         
     with right_col:
         st.markdown('<div class="section-label">Candidate Detail View</div>', unsafe_allow_html=True)
